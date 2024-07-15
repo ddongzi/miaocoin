@@ -1,6 +1,5 @@
 [js](https://www.runoob.com/js/js-howto.html)
-[ramda]
-
+[200line blockchain](https://medium.com/@lhartikk/a-blockchain-in-200-lines-of-code-963cc1cc0e54#.dttbm9afr5)
 # 从0构建区块链
 
 ## 第1章：区块和区块链基础机构
@@ -128,7 +127,17 @@ blocks为数据，[block]
 
 ## HTTP服务：查询区块链
 
+## 选择最长的链
+![image](https://github.com/user-attachments/assets/97bbcd73-eaf2-4e5f-8b76-11f9c79abea7)
 
+# HTTPserver
+服务：
+
+# node
+An essential part of a node is to share and sync the blockchain with other nodes.The following rules are used to keep the network in sync.
+- When a node generates a new block, it broadcasts it to the network
+- When a node connects to a new peer it querys for the latest block
+- When a node encounters a block that has an index larger than the current known block, it either adds the block the its current chain or querys for the full blockchain.
 
 ## 第3章：区块验证与链的更新
 
