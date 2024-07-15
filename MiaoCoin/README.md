@@ -3,11 +3,30 @@
 
 # 从0构建区块链
 
-## 第1章：区块和区块链基础
+## 第1章：区块和区块链基础机构
 
 ### 1.1 定义区块结构
 1. Block类 {index, timestamp, data, previoushash}
-
+```json
+/*
+{ // Block
+    "index": 0, // (first block: 0)
+    "previousHash": "0", // (hash of previous block, first block is 0) (64 bytes)
+    "timestamp": 1465154705, // number of seconds since January 1, 1970
+    "transactions": [ // list of transactions inside the block
+        { // transaction 0
+            "id": "63ec3ac02f...8d5ebc6dba", // random id (64 bytes)
+            "hash": "563b8aa350...3eecfbd26b", // hash taken from the contents of the transaction: sha256 (id + data) (64 bytes)
+            "type": "regular", // transaction type (regular, fee, reward)
+            "data": {
+                "inputs": [], // list of input transactions
+                "outputs": [] // list of output transactions
+            }
+        }
+    ],
+}
+*/
+```
 - **作用**: 构建区块链的基本单元
 
 ### 1.2 创建区块链结构
@@ -61,31 +80,55 @@ class DB {
 ```
 blocks为数据，[block] 
 
-### 添加一个区块
-
-
+3. transcation类
+```json
+{
+    "id": "5a78ebcfdc71796f7e7e29a31b63e61b0c08c32a944e56db2b59fa971b7aa10f",
+    "timestamp": 1632765429,
+    "inputs": [
+        {
+            "transaction": "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6",
+            "index": 0,
+            "address": "sender_address_1",
+            "signature": "sender_signature_1"
+        },
+        {
+            "transaction": "b2c3d4e5f6g7h8i9j0k1l2m3n4o5p7q8",
+            "index": 1,
+            "address": "sender_address_2",
+            "signature": "sender_signature_2"
+        }
+    ],
+    "outputs": [
+        {
+            "amount": 50,
+            "address": "recipient_address_1"
+        },
+        {
+            "amount": 20,
+            "address": "recipient_address_2"
+        }
+    ]
+}
 ```
+
+
+
+
+```javascript
     addBlock(newBlock) {
         newBlock.previoushash = this.getLastBlock().toHash()
         this.blocks.push(newBlock)
         this.blocksDb.write(this.blocks)
         console.info(`Block added ${newBlock}`)
     }
-```javascript
+```
 
 - **作用**: 构建区块链的链式结构
 
-## 第2章：创世区块与哈希计算
+## HTTP服务：查询区块链
 
-### 2.1 创建创世区块
-- **步骤**: 创建并添加第一个区块（创世区块）到区块链
-- **预期输出**: 包含创世区块的区块链
-- **作用**: 初始化区块链
 
-### 2.2 实现哈希计算
-- **步骤**: 使用哈希函数（如 SHA-256）计算区块的哈希值
-- **预期输出**: 区块的哈希值计算函数
-- **作用**: 确保区块的完整性和不可篡改性
 
 ## 第3章：区块验证与链的更新
 
