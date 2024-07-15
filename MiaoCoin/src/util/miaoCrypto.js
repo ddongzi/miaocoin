@@ -1,4 +1,4 @@
-const {createHash} = require('crypto');
+const {createHash, randomBytes} = require('crypto');
 
 class MiaoCrypto {
     static hash(data) {
@@ -6,6 +6,10 @@ class MiaoCrypto {
             .update(data)
             .digest('hex');
         return hash;
+    }
+    
+    static randomId(size = 64) {
+        return randomBytes(Math.floor(size / 2)).toString('hex');
     }
 }
 module.exports = MiaoCrypto

@@ -3,7 +3,40 @@
         "index": 0,
         "previoushash": "0",
         "timestamp": "2024-07-15T06:56:11.949Z",
-        "data": "Genius Block"
+        "data": "Genius Block",
+        "transactions": [
+            {
+                "id" : "0",
+                "hash" : "0",
+                "data" : {
+                    "inputs" :[
+                        {
+                            "transaction": "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6",
+                            "index": 0,
+                            "address": "sender_address_1",
+                            "signature": "sender_signature_1"
+                        },
+                        {
+                            "transaction": "b2c3d4e5f6g7h8i9j0k1l2m3n4o5p7q8",
+                            "index": 1,
+                            "address": "sender_address_2",
+                            "signature": "sender_signature_2"
+                        }
+                    ],
+                    "outputs" : [
+                        {
+                            "amount": 50,
+                            "address": "recipient_address_1"
+                        },
+                        {
+                            "amount": 20,
+                            "address": "recipient_address_2"
+                        }
+                    ]
+                }
+
+            }
+        ]
     },
     {
         "index": 1,

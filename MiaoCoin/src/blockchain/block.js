@@ -1,5 +1,6 @@
 // block.js
 const MiaoCrypto = require('../util/miaoCrypto');
+const Transcation = require('./transaction');
 class Block{
     constructor(index, timestamp, data,previoushash = "") {
         this.index = index;
@@ -14,7 +15,11 @@ class Block{
     static fromJson(data) {
         let block = new Block();
         Object.keys(data).forEach(key => {
-            block[key] = data[key];
+            if (key === 'transactions' && data[key]) {
+                block[key] = Transcation.fromJson(data[key])
+            } else {
+                block[key] = data[key];
+            }
         })
         return block;
     }

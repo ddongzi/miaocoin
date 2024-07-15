@@ -1,13 +1,26 @@
 const Block = require("./block")
 const DB = require("../util/db")
 const Blocks = require("./blocks")
+const Transaction = require("./transaction")
+const Transcations = require("./transactions")
+const MiaoCrypto = require("../util/miaoCrypto")
+const EventEmitter = require('events');
+
 const BLOCKS_FILE = 'blocks.json'
+const Transcations_FILE = 'transactions.json'
 
 class BlockChain {
     constructor(name) {
+        this.transactionsDb = new DB('data/'+ Transcations_FILE)
+        this.transactions = this.transactionsDb.read(Transcations, new Transcations())
         this.blocksDb = new DB('data/' + BLOCKS_FILE)
         this.blocks = this.blocksDb.read(Blocks,new Blocks()) // 读取blocks数组
+
+        // 事件发射
+        this.emitter = new EventEmitter()
+
         this.init()
+
     }
     init() {
         // Create from genius block if blockchain is empty.
@@ -50,8 +63,49 @@ class BlockChain {
         }
         return true
     }
+
+    addTransaction(newTransaction, emit = true) {
+
+        this.transactions.push(newTransaction);
+        console.log(JSON.stringify(this.transactions))
+        this.transactionsDb.write(this.transactions);
+
+        console.info(`Transaction added: ${JSON.stringify(newTransaction)}`);
+        if (emit) this.emitter.emit('transactionAdded', newTransaction);
+
+        return newTransaction;
+    }
 }
 
 const miao = new BlockChain("miao")
 const block1 = new Block(2,new Date().toUTCString(),"Miao Block")
 miao.addBlock(block1)
+const transaction = new Transaction()
+transaction.id = MiaoCrypto.randomId()
+transaction.inputs = [
+    {
+        "transaction": MiaoCrypto.randomId(),
+        "index": 0,
+        "address": MiaoCrypto.randomId(),
+        "signature": MiaoCrypto.randomId()
+    },
+    {
+        "transaction": MiaoCrypto.randomId(),
+        "index": 1,
+        "address": MiaoCrypto.randomId(),
+        "signature": MiaoCrypto.randomId()
+    }
+]
+transaction.outputs = [
+    {
+        "amount": 1,
+        "address": MiaoCrypto.randomId()
+    },
+    {
+        "amount": 20,
+        "address": MiaoCrypto.randomId()
+    }
+]
+transaction.hash = transaction.toHash()
+
+miao.addTransaction(transaction)

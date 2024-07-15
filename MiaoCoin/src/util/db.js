@@ -16,6 +16,7 @@ class DB {
         return (prototype) ?  prototype.fromJson(JSON.parse(content)) :JSON.parse(content);
     }
     write(data) {
+        console.log(`write ${data} ${this.filePath}`);
         fs.ensureDirSync(path.dirname(this.filePath))
         fs.writeFileSync(this.filePath, JSON.stringify(data, null, 4))
     }
