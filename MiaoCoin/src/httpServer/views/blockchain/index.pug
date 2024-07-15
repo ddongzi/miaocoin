@@ -1,0 +1,47 @@
+doctype html
+html
+  head
+    title 区块链信息展示
+    meta(charset='UTF-8')
+    meta(name='viewport' content='width=device-width, initial-scale=1')
+    link(rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css')
+    style.
+      body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+        background-color: #f4f4f4;
+      }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      }
+      h1, h2, h3 {
+        color: #333;
+      }
+      .block, .peer {
+        border: 1px solid #ddd;
+        padding: 10px;
+        margin-bottom: 10px;
+        border-radius: 4px;
+        background-color: #f9f9f9;
+      }
+      .block p, .peer p {
+        margin: 0;
+      }
+  body
+    .container
+      h1 区块链信息展示
+      p 这是一个展示区块链各种信息的页面，包括区块和节点信息。
+
+      h2 区块链信息
+      each block in blocks
+        .block
+          h3 区块 #{block.index}
+          p 上一个块哈希: #{block.previousHash}
+          p 哈希: #{block.hash}
+          p 时间戳: #{block.timestamp}
+          p 数据: #{block.data}

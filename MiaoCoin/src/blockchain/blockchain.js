@@ -31,6 +31,15 @@ class BlockChain {
         }
 
     }
+    generateNextBlock (data) {
+        var previousBlock = this.getLastBlock()
+        var nextIndex = previousBlock.index + 1
+        var nextTimestamp = new Date().toUTCString()
+        var newBlock = new Block(nextIndex, nextTimestamp, data)
+        newBlock.hash = newBlock.toHash()
+        return newBlock;
+        
+    }
     createGeniusBlock() {
         return new Block(
             0,
@@ -48,7 +57,7 @@ class BlockChain {
             newBlock.previoushash = this.getLastBlock().toHash()
             this.blocks.push(newBlock)
             this.blocksDb.write(this.blocks)
-            console.info(`Block added ${JSON.stringify(newBlock)}`)
+            console.info(`Block added ${newBlock.id}`)
         }
     }
     // 检查新来的区块是否符合要求
@@ -61,25 +70,34 @@ class BlockChain {
             console.error("Invalid previous hash")
             return false
         }
+        if (newBlock.toHash()!== newBlock.hash) {
+            return false
+        }
         return true
     }
 
     addTransaction(newTransaction, emit = true) {
 
         this.transactions.push(newTransaction);
-        console.log(JSON.stringify(this.transactions))
         this.transactionsDb.write(this.transactions);
 
-        console.info(`Transaction added: ${JSON.stringify(newTransaction)}`);
+        console.info(`Transaction added: ${newTransaction.id}`);
         if (emit) this.emitter.emit('transactionAdded', newTransaction);
 
         return newTransaction;
     }
+
+    // 链冲突，Choosing the longest chain
+    replaceChain (newBlocks) {
+        if (newBlocks.length <= this.blocks.length) {
+            console.error("Received blockchain is not longer than current blockchain.")
+        } 
+    }
 }
 
-const miao = new BlockChain("miao")
+const miaoBlockChain = new BlockChain("miao")
 const block1 = new Block(2,new Date().toUTCString(),"Miao Block")
-miao.addBlock(block1)
+miaoBlockChain.addBlock(block1)
 const transaction = new Transaction()
 transaction.id = MiaoCrypto.randomId()
 transaction.inputs = [
@@ -108,4 +126,6 @@ transaction.outputs = [
 ]
 transaction.hash = transaction.toHash()
 
-miao.addTransaction(transaction)
+miaoBlockChain.addTransaction(transaction)
+
+module.exports = miaoBlockChain 

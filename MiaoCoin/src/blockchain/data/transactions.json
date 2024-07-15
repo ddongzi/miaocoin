@@ -1,7 +1,7 @@
 [
     {
         "id": "7e43e5f9ea04bd5063abd1654831c71d93a12e8e5e6f0b324d4449f4291e51d2",
-        "hash": "5dfde220e59cf735706fb404017d91eb5501e9d073aa111ea3848ba96a6d5b63",
+        "hash": "8e659db5b2a39efeb2925ab58e5b58dce86263fa97b30e69de4e3e130595cf06",
         "data": {
             "inputs": [],
             "outputs": []
@@ -28,6 +28,38 @@
             {
                 "amount": 20,
                 "address": "d23fdaab0b96332ad44f949c6f8b260fe0978d94f81d01ad1336cf66e08589e0"
+            }
+        ]
+    },
+    {
+        "id": "fa00a867d8fadcd00b334af6c40aa582d29c6bac9c5902dfb2480245973c04fc",
+        "hash": "72ed00297d8817e2447025580ba1118a2e679222995780e1ab06b28e554d2c96",
+        "data": {
+            "inputs": [],
+            "outputs": []
+        },
+        "inputs": [
+            {
+                "transaction": "17a9a6e4c924a50ed1be88f66c39ee358d2429eda690ec712bbbac304d3a461d",
+                "index": 0,
+                "address": "06b26d537481dbf7492b57b104413493aba94d62988258460c38b6fe53a6332a",
+                "signature": "fdf9c413c3a934531178e46d0f7b863f5a83fc977fae6fa0fb6ad3fb91eac0b5"
+            },
+            {
+                "transaction": "c0f36ec10a0c65735e2ebd2e8934c20977b6c1d6c257dc754616e1c714c882f4",
+                "index": 1,
+                "address": "266374a20701216f2ec7af8ffa509b155fbcf57f13fcd5e4bce8dc0bf5dd2258",
+                "signature": "3817e7f202cee23b341320215f7b159bb6fdebd7256636c70c01bacb9fb99145"
+            }
+        ],
+        "outputs": [
+            {
+                "amount": 1,
+                "address": "3cd29ac14c1a15d7d38ac2ec3e88059b7fc4cb8169e6717fbef196f99f40fb3f"
+            },
+            {
+                "amount": 20,
+                "address": "149b3ca94b20f9e9142e6999e9e7efd4b1833d51db9ed4f90ae9db91dbaf9e9f"
             }
         ]
     }

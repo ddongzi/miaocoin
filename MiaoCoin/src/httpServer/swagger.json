@@ -1,0 +1,59 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "Visualize the blockchain by accessing <a href='/blockchain' target='_blank'>here</a>.",
+        "version": "0.0.1",
+        "title": "MiaoCoin API"
+    },
+    "basePath": "/",
+    "schemes": [
+        "http"
+    ],
+    "consumes": [
+        "application/json"
+    ],
+    "produces": [
+        "application/json"
+    ],
+    "paths": {
+        "/blockchain":{
+            "get" : {
+                "summary" : "Get blockchain",
+                "description" :"Returns blockchain",
+                "responses":{
+                    "200":{
+                        "description" : "Successful operation",
+                        "schema" :{
+                            "type" : "array",
+                            "items" : {
+                                "$ref" : "#/definitions/Block"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "Block": {
+            "type": "object",
+            "properties": {
+                "index": {
+                    "type": "integer"
+                },
+                "previousHash": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "integer"
+                },
+                "data": {
+                    "type": "object"
+                },
+                "hash": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

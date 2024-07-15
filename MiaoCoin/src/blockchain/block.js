@@ -2,11 +2,12 @@
 const MiaoCrypto = require('../util/miaoCrypto');
 const Transcation = require('./transaction');
 class Block{
-    constructor(index, timestamp, data,previoushash = "") {
+    constructor(index, timestamp, data,previoushash = "",hash) {
         this.index = index;
         this.previoushash = previoushash;
         this.timestamp = timestamp;
         this.data = data;
+        this.hash = hash;
     }
     toHash() {
         return MiaoCrypto.hash(this.index + this.previoushash + this.timestamp + JSON.stringify(this.data));
