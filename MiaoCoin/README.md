@@ -46,7 +46,6 @@ class BlockChain {
 ]
 ```
 
-- fan 
 
 ```js
 class DB {
@@ -62,7 +61,8 @@ class DB {
 ```
 blocks为数据，[block] 
 
-- 管理区块：添加一个区块
+### 添加一个区块
+
 
 ```
     addBlock(newBlock) {
