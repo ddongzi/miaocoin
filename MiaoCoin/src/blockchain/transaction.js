@@ -41,7 +41,7 @@ class Transaction {
     }
     
     // 在未花费交易输出列表中 根据交易ID和index ，找到 utxout
-    findUnspentTxOut(id,index,unspentTxOutputs) {
+    static findUnspentTxOut(id,index,unspentTxOutputs) {
         return unspentTxOutputs.find((t) => t.txOutId === id && t.txOutIndex === index)
     }
     
@@ -53,16 +53,21 @@ class Transaction {
     }
 
     // 新的交易来更新 utxOuts
-    updateUnspentTxOutput(utxOuts,transactions) {
-        const newUnspentTxOutputs = transactions.map((t,index) => {
-            return new UTxOutput(t.id, index, t.outputs[index].address, t.outputs[index].amount)
+    static updateUnspentTxOutputs(utxOuts,transactions) {
+        const newUnspentTxOutputs = transactions.map((t) => {
+            return t.outputs.map((txout,index) => new UTxOutput(t.id,index, txout.address,txout.amount))
         }).reduce((a,b) => a.concat(b), []);
-        const consumedTxOutputs = transactions.map((t) => {
-            return new UTxOutput(t.txOutId, t.txOutIndex, '',0)
-        })
+        const consumedTxOutputs = transactions.map((t) => t.inputs)
+            .reduce((a, b) => a.concat(b), [])
+            .map((txin) => new UTxOutput(txin.txOutId, txin.txOutIndex,'',0))
+
         const resultingUnspentTxOuts = utxOuts.filter((utxout) => {
-            return !this.findUnspentTxOut(utxout.id, utxout.index, consumedTxOutputs) // 保留没有被消费的
+            return !Transaction.findUnspentTxOut(utxout.id, utxout.index, consumedTxOutputs) // 保留没有被消费的
         }).concat(newUnspentTxOutputs);
+
+        // console.log(`newUnspentTxOutputs: ${JSON.stringify(newUnspentTxOutputs)}\n consumedTxOutputs: ${JSON.stringify(consumedTxOutputs)}`)
+        // console.log(`Old uxOutputs: ${JSON.stringify(utxOuts)}\n New uxOutputs: ${JSON.stringify(newUnspentTxOutputs)}`)
+        return resultingUnspentTxOuts
     }
 
     // 交易有效性验证
@@ -109,7 +114,15 @@ class Transaction {
         t.outputs = [new TxOutput(address, COINBASE_AMOUNT)];
         t.id = Transaction.getTransactionId(t);
         console.log(`Coinbase transaction created. ${JSON.stringify(t)}`);
+
         return t;
+    }
+
+    // 根据交易更新 utxouts
+    static processTransactions(transactions, utxOuts) {
+        // TODO:验证是否有效交易。。
+
+        return Transaction.updateUnspentTxOutputs(utxOuts,transactions);
     }
 }
 module.exports = {Transaction, TxInput, TxOutput, UTxOutput}

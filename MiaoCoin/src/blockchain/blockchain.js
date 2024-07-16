@@ -7,7 +7,7 @@ const MiaoCrypto = require("../util/miaoCrypto")
 const EventEmitter = require('events');
 const  hexToBinary  = require("../util/util")
 const {BASE_PATH} = require("../config")
-const { Wallet } = require("./wallet")
+const { Wallet, myWallet } = require("./wallet")
 
 const BLOCKS_FILE = BASE_PATH + "/src/blockchain/data/blocks.json";
 const Transactions_FILE = BASE_PATH + "/src/blockchain/data/transactions.json"
@@ -114,9 +114,12 @@ class BlockChain {
     getLastBlock() {
         return this.blocks[this.blocks.length - 1]
     }
+    // 将一个block加入链
     addBlock(newBlock) {
         if (this.checkBlock(newBlock, this.getLastBlock())) {
-            newBlock.previoushash = this.getLastBlock().toHash()
+            // console.log(`adding block ${JSON.stringify(newBlock)}`)
+
+            this.uTxouts = Transaction.processTransactions(newBlock.data,this.uTxouts)
             this.blocks.push(newBlock)
             this.blocksDb.write(this.blocks)
             console.info(`Block added ${newBlock.index}`)
@@ -165,13 +168,15 @@ class BlockChain {
 
     // 通过一笔交易生成一个块
     generateNextBlockWithTransaction(address, amount) {
-        console.log(`Generate Next Bloc kWith Transaction, ${address} with ${amount}`)
+        console.log(`Generate Next Block kWith Transaction, ${address} with ${amount}`)
         if (!Transaction.isValidAddress(address)) {
             console.error("Invalid address");
         }
-        const coinBaseTx = Transaction.generateConinBaseTransaction(address, this.getLastBlock().index + 1)
+        const coinBaseTx = Transaction.generateConinBaseTransaction(myWallet.address, this.getLastBlock().index + 1)
+        this.uTxouts = Transaction.updateUnspentTxOutputs(this.uTxouts, [coinBaseTx])
         const tx = new Wallet().generateTransaction(address, this.uTxouts, amount)
         const blockData = [coinBaseTx, tx];
+        console.log(JSON.stringify(blockData));
         const newBlock = this.generateNextBlock(blockData)
         this.addBlock(newBlock)
         return newBlock

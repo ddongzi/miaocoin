@@ -17,11 +17,12 @@ class Wallet {
             const {privateKey, publicKey} = MiaoCrypto.generateKeyPair();
             writeFileSync(PRIVATEKEY_FILE, privateKey)
             writeFileSync(PUBLICKEY_FILE, publicKey)
-            console.log(`Private or public key file not found, creating new ones... ${privateKey} ${publicKey}`);
+            console.log(`Private or public key file not found, creating new ones...`);
 
         }
-        this.privateKey = MiaoCrypto.pemToHex(readFileSync(PRIVATEKEY_FILE))
-        this.publicKey = MiaoCrypto.pemToHex(readFileSync(PUBLICKEY_FILE))
+        this.privateKey = readFileSync(PRIVATEKEY_FILE)
+        this.publicKey = readFileSync(PUBLICKEY_FILE)
+        this.address = MiaoCrypto.pemToHex(this.publicKey)
     }
 
     static getBalance(address, unspentTxOutputs) {
@@ -31,11 +32,11 @@ class Wallet {
     }
     // 从自己的余额中扣除amount给adress
     generateTransaction(receiverAdress, uTxOutputs,amount) {
-        console.log(`===> ${this.publicKey} send ${amount} to ${receiverAdress}`)
+        // console.log(`===> ${this.publicKey} send ${amount} to ${receiverAdress}`)
         const tx = new Transaction()
         
         const myUTxOutputs = uTxOutputs.filter((utxout) => {
-            return utxout.address === this.publicKey
+            return utxout.address === this.address
         })
         // 找到够支付的utxout
         const needUTxOutputs = []
@@ -49,11 +50,14 @@ class Wallet {
                 break
             }
         }
+        // console.log(`找到够支付的utxout, ${leftAmount}, NEED : ${JSON.stringify(needUTxOutputs)}}`)
         // 将其转化未交易的输入
         const txInputs = needUTxOutputs.map(utxout => {
             const unsignedTxInput = new TxInput(utxout.txOutId, utxout.txOutIndex,'')
             return unsignedTxInput
         })
+
+        // console.log(`将其转化未交易的输入,  ${JSON.stringify(txInputs)}}`)
 
         // 输出
         const txOutputs =[]
@@ -61,21 +65,24 @@ class Wallet {
         if (leftAmount === 0) {
             txOutputs.push(txOutput)
         } else {
-            const leftTxOutput = new TxOutput(this.publicKey, amount)
-            txOutputs.concat([txOutput, leftTxOutput])
-            return 
-        }
+            const leftTxOutput = new TxOutput(this.address, leftAmount)
+            txOutputs.push(txOutput)
+            txOutputs.push(leftTxOutput)
 
+        }
+        //console.log(`输出,  ${JSON.stringify(txOutputs)}`)
+        tx.id = Transaction.getTransactionId(tx)
+        tx.inputs = txInputs
         tx.inputs = txInputs.map((txin,index) => {
-            txin.signatureTXInputs(this.privateKey,index)
+            tx.signatureTXInputs(this.privateKey,index)
             return txin
         })
         tx.outputs = txOutputs
-        tx.id = Transaction.getTransactionId(tx)
         tx.hash = tx.toHash()
         return tx
     }
 
 }
+// 固定钱包
 const myWallet = new Wallet('MyWallet')
 module.exports = {Wallet,myWallet}

@@ -1,4 +1,4 @@
-const {createHash, randomBytes, generateKeyPairSync} = require('crypto');
+const {createHash, randomBytes, generateKeyPairSync,createSign} = require('crypto');
 
 class MiaoCrypto {
     static hash(data) {
@@ -13,7 +13,7 @@ class MiaoCrypto {
     }
 
     static sign(data, privateKey) {
-        const signer = crypto.createSign('SHA256');
+        const signer = createSign('SHA256');
         signer.update(data).end(); // 提供签名数据并结束输入
         return signer.sign(privateKey, 'hex');
     }

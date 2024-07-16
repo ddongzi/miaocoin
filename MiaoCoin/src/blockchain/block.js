@@ -6,7 +6,7 @@ class Block{
         this.index = index;
         this.previoushash = previoushash;
         this.timestamp = timestamp;
-        this.data = data;
+        this.data = data; // transactions data
         this.hash = hash;
         this.difficulty = difficulty;
         this.nouce = nouce
