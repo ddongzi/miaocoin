@@ -147,6 +147,24 @@ https://lhartikk.github.io/jekyll/update/2017/07/12/chapter3.html
 
 > However, creating transactions is still very difficult. We must manually create the inputs and outputs of the transactions and sign them using our private keys. This will change when we introduce wallets in the next chapter.
 
+## Coinbase交易
+它是每个区块的第一笔交易，用于奖励矿工。Coinbase交易没有输入（txIns），因为它不花费之前的交易输出，而是从系统中创建新币。
+txIn.txOutIndex 没啥用， 可用blockIndex来标识这个独特交易
+```js
+generateConinBaseTransaction(address,blockIndex) {
+        const t = new Transaction()
+        const txIn = new TxInput();
+        txIn.signature = '';
+        txIn.txOutId = '';
+        txIn.txOutIndex = blockIndex;
+    
+        t.txIns = [txIn];
+        t.txOuts = [new TxOut(address, COINBASE_AMOUNT)];
+        t.id = getTransactionId(t);
+        return t;
+
+    }
+```
 # 第四章 Wallet
 The goal of the wallet is to create a more abstract interface **for the end user.**
 
@@ -159,4 +177,16 @@ The goal of the wallet is to create a more abstract interface **for the end user
 
 ## Wallet balance
 This consequently means that anyone can solve the balance of a given address.
+余额只是 未经消费的输出。 所以只需找到adress的utxout，金额加起来即可
+
+# Generating transactions
+
+Let’s play out a bit more complex transaction scenario:
+1. User C has initially 0 coins
+2. User C receives 3 transactions worth of 10, 20 and 30 coins
+3. User C wants to send 55 coins to user D. What will the transaction look like?
+
+![image](https://github.com/user-attachments/assets/fccecfa2-af3f-44be-a021-940f1b7b199c)
+
+
 
