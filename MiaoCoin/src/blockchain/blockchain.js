@@ -103,7 +103,7 @@ class BlockChain {
     }
     isValidTimeStamp(newBlock, previousBlock) {
         return new Date(newBlock.timestamp) - 60 > new Date(previousBlock.timestamp) 
-            && new Date(newBlock.timestamp)  - 60 ? new Date()
+            && new Date(newBlock.timestamp)  - 60 > new Date()
 
     }
 
