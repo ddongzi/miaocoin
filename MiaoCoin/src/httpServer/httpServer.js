@@ -27,6 +27,12 @@ class HttpServer {
             this.p2p.connectPeer(peer)
             res.send('Connected to peer')
         })
+        this.app.post('/mineTransaction', (req,res) => {
+            const address = req.body.address;
+            const amount = req.body.amount;
+            const resp = this.blockChain.generateNextBlockWithTransaction(address, amount);
+            res.send(resp);
+        })
 
     }
     

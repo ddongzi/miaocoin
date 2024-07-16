@@ -83,7 +83,7 @@ class DB {
 ```
 blocks为数据，[block] 
 
-3. transcation类
+3. Transaction类
 ```json
 {
     "id": "5a78ebcfdc71796f7e7e29a31b63e61b0c08c32a944e56db2b59fa971b7aa10f",

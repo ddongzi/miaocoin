@@ -1,15 +1,15 @@
-// transcations.js 反序列化正确构建数组对象,防止类型丢失
+// Transactions.js 反序列化正确构建数组对象,防止类型丢失
 
-const Transcation = require("./transaction");
+const {Transaction} = require("./transaction");
 
-class Transcations extends Array {
+class Transactions extends Array {
     // data:JSON解析的obj []
     static fromJson(data){
-        let transactions = new Transcations();
+        let transactions = new Transactions();
         data.forEach(element => {
-            transactions.push(Transcation.fromJson(element))
+            transactions.push(Transaction.fromJson(element))
         }); 
         return transactions;
     }
 }
-module.exports = Transcations
+module.exports = Transactions

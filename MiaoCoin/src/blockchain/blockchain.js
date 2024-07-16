@@ -1,25 +1,27 @@
 const Block = require("./block")
 const DB = require("../util/db")
 const Blocks = require("./blocks")
-const Transaction = require("./transaction")
-const Transcations = require("./transactions")
+const {Transaction} = require("./transaction")
+const Transactions = require("./transactions")
 const MiaoCrypto = require("../util/miaoCrypto")
 const EventEmitter = require('events');
 const  hexToBinary  = require("../util/util")
-const BASE_PATH = require("../config")
+const {BASE_PATH} = require("../config")
+const { Wallet } = require("./wallet")
 
 const BLOCKS_FILE = BASE_PATH + "/src/blockchain/data/blocks.json";
-const Transcations_FILE = BASE_PATH + "/src/blockchain/data/transactions.json"
+const Transactions_FILE = BASE_PATH + "/src/blockchain/data/transactions.json"
 const BLOCK_GENERATION_INTERNAL = 3 // 10 seconds
 const DIFFICULTY_ADJUSTMENT_INTERVAL = 3 // 10 blocks
 
 class BlockChain {
     constructor(name) {
-        this.transactionsDb = new DB(Transcations_FILE)
-        this.transactions = this.transactionsDb.read(Transcations, new Transcations())
+        this.transactionsDb = new DB(Transactions_FILE)
+        this.transactions = this.transactionsDb.read(Transactions, new Transactions())
         this.blocksDb = new DB(BLOCKS_FILE)
         this.blocks = this.blocksDb.read(Blocks,new Blocks()) // 读取blocks数组
 
+        this.uTxouts = []
         // 事件发射
         this.emitter = new EventEmitter()
 
@@ -154,11 +156,25 @@ class BlockChain {
             console.error("Received blockchain is not longer than current blockchain.")
         } 
     }
-
+    // 检测hash是否满足difficulty要求
     hasMatchesDifficulty(hash, difficulty) {
         const hashBinary = hexToBinary(hash)
         const prefix = '0'.repeat(difficulty)
         return hashBinary.startsWith(prefix)
+    }
+
+    // 通过一笔交易生成一个块
+    generateNextBlockWithTransaction(address, amount) {
+        console.log(`Generate Next Bloc kWith Transaction, ${address} with ${amount}`)
+        if (!Transaction.isValidAddress(address)) {
+            console.error("Invalid address");
+        }
+        const coinBaseTx = Transaction.generateConinBaseTransaction(address, this.getLastBlock().index + 1)
+        const tx = new Wallet().generateTransaction(address, this.uTxouts, amount)
+        const blockData = [coinBaseTx, tx];
+        const newBlock = this.generateNextBlock(blockData)
+        this.addBlock(newBlock)
+        return newBlock
     }
 
 }

@@ -1,3 +1,4 @@
+const { COINBASE_AMOUNT } = require('../config');
 const MiaoCrypto = require('../util/miaoCrypto');
 class TxInput {
     constructor(txOutId, txOutIndex,signature) {
@@ -20,7 +21,7 @@ class UTxOutput {
         this.amount = amount
     }
 }
-class Transcation {
+class Transaction {
     constructor() {
         this.id = null
         this.hash = null
@@ -31,8 +32,8 @@ class Transcation {
     }
 
     // 生成交易ID
-    getTranscationId(transaction) {
-        const inputContent = transaction.inputs.map((t) => t.previousOutId + t.previousOutIndex)
+    static getTransactionId(transaction) {
+        const inputContent = transaction.inputs.map((t) => t.txOutId + t.txOutIndex)
             .reduce((a,b) => a+b, '')
         const outputContent = transaction.outputs.map((t) =>t.address + t.amount)
             .reduce((a,b) => a+b,'')
@@ -43,7 +44,6 @@ class Transcation {
     findUnspentTxOut(id,index,unspentTxOutputs) {
         return unspentTxOutputs.find((t) => t.txOutId === id && t.txOutIndex === index)
     }
-
     
     //  交易者对 inputs/index 进行签名
     signatureTXInputs(privateKey,index) {
@@ -63,7 +63,6 @@ class Transcation {
         const resultingUnspentTxOuts = utxOuts.filter((utxout) => {
             return !this.findUnspentTxOut(utxout.id, utxout.index, consumedTxOutputs) // 保留没有被消费的
         }).concat(newUnspentTxOutputs);
-
     }
 
     // 交易有效性验证
@@ -75,7 +74,7 @@ class Transcation {
     }
 
     isValidTransaction(transaction) {
-        if (this.getTranscationId(transaction) !== transaction.id) {
+        if (this.getTransactionId(transaction) !== transaction.id) {
             console.error("Invalid transaction ID")
             return false
         }
@@ -85,12 +84,32 @@ class Transcation {
         return MiaoCrypto.hash(JSON.stringify(this.id + this.hash + JSON.stringify(this.data)))
     }
     static fromJson(data) {
-        let transcation = new Transcation()
+        let tx = new Transaction()
         Object.keys(data).forEach(key => {
-            transcation[key] = data[key]
+            tx[key] = data[key]
         })
-        transcation.hash = transcation.toHash()
-        return transcation
+        tx.hash = tx.toHash()
+        return tx
+    }
+
+    // 地址验证
+    static isValidAddress(address) {
+        return true
+    }
+
+    // 生成最初交易
+    static generateConinBaseTransaction(address,blockIndex) {
+        const t = new Transaction()
+        const txIn = new TxInput();
+        txIn.signature = '';
+        txIn.txOutId = '';
+        txIn.txOutIndex = blockIndex;
+    
+        t.inputs = [txIn];
+        t.outputs = [new TxOutput(address, COINBASE_AMOUNT)];
+        t.id = Transaction.getTransactionId(t);
+        console.log(`Coinbase transaction created. ${JSON.stringify(t)}`);
+        return t;
     }
 }
-module.exports = Transcation
+module.exports = {Transaction, TxInput, TxOutput, UTxOutput}
