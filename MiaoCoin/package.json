@@ -4,6 +4,7 @@
     "fs-extra": "^11.2.0",
     "pug": "^3.0.3",
     "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^5.0.1"
+    "swagger-ui-express": "^5.0.1",
+    "ws": "^8.18.0"
   }
 }

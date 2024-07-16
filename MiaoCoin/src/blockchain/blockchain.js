@@ -57,6 +57,15 @@ class BlockChain {
             typeof block.previoushash ==='string' &&
             typeof block.hash ==='string'
     }
+    isValidBlockChain(chain) {
+        for (var i = 1; i < chain.blocks.length; i++) {
+            if (!this.checkBlock(chain.blocks[i], chain.blocks[i - 1])) {
+                console.error("Blockchain is not valid")
+                return false
+            }
+        }
+        return true
+    }
 
     getLastBlock() {
         return this.blocks[this.blocks.length - 1]

@@ -1,27 +1,31 @@
 const express = require('express')
 const bodyParser = require('body-parser')
-const swaggerUI = require('swagger-ui-express')
-const swaggerDocument = require('./swagger.json')
 const path = require('path')
 const miaoBlockChain = require('../blockchain/blockchain')
+const P2P = require('./p2p')
 class HttpServer {
     constructor(node = null, blockChain) {
         this.node = node
         this.blockChain = blockChain
-
+        this.p2p = new P2P(4000)
         this.app = express()
         this.app.use(bodyParser.json())
 
-        this.app.set('views', path.join(__dirname, 'views'));
-        this.app.set('view engine', 'pug')
-
-        this.app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerDocument))
-
-        this.app.get('/blockchain', (req, res) => {
-            console.log(`get : ${this.blockChain}`)
-            res.render('blockchain/index.pug', {
-                blocks: blockChain.blocks
-            })
+        this.app.get('/blocks', (req, res) => {
+            res.send(blockChain.blocks)
+        })
+        this.app.post('/mineBlock', (req, res) => {
+            const newBlock = blockChain.generateNextBlock('test')
+            res.send(newBlock)
+        })
+        this.app.get('/peers', (req,res) => {
+            res.send(this.p2p.sockets.map((s) => s._socket.remoteAddress + ':' + s._socket.remotePort))
+        })
+        this.app.post('/addPeer', (req, res) => {
+            const peer = req.body.peer
+            console.log(`post Connecting to ${peer}`);
+            this.p2p.connectPeer(peer)
+            res.send('Connected to peer')
         })
 
     }
