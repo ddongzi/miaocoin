@@ -12,7 +12,9 @@ class Block{
         this.nouce = nouce
     }
     toHash() {
-        return MiaoCrypto.hash(this.index + this.previoushash + this.timestamp + JSON.stringify(this.data));
+        return Block.caculateHash(this.index, this.timestamp,JSON.stringify(this.data),
+            this.previoushash, this.difficulty, this.nouce
+        )
     }
 
     static fromJson(data) {
@@ -27,6 +29,7 @@ class Block{
         return block;
     }
     static caculateHash(index,timestamp,data,previoushash,difficulty,nouce) {
+        
         return MiaoCrypto.hash(index + previoushash + timestamp +difficulty + nouce + JSON.stringify(this.data));
 
     }

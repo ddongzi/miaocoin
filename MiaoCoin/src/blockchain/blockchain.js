@@ -5,18 +5,19 @@ const Transaction = require("./transaction")
 const Transcations = require("./transactions")
 const MiaoCrypto = require("../util/miaoCrypto")
 const EventEmitter = require('events');
-const { hexToBinary } = require("../util/util")
+const  hexToBinary  = require("../util/util")
+const BASE_PATH = require("../config")
 
-const BLOCKS_FILE = 'blocks.json'
-const Transcations_FILE = 'transactions.json'
-const BLOCK_GENERATION_INTERNAL = 10 // 10 seconds
-const DIFFICULTY_ADJUSTMENT_INTERVAL = 10 // 10 blocks
+const BLOCKS_FILE = BASE_PATH + "/src/blockchain/data/blocks.json";
+const Transcations_FILE = BASE_PATH + "/src/blockchain/data/transactions.json"
+const BLOCK_GENERATION_INTERNAL = 3 // 10 seconds
+const DIFFICULTY_ADJUSTMENT_INTERVAL = 3 // 10 blocks
 
 class BlockChain {
     constructor(name) {
-        this.transactionsDb = new DB('data/'+ Transcations_FILE)
+        this.transactionsDb = new DB(Transcations_FILE)
         this.transactions = this.transactionsDb.read(Transcations, new Transcations())
-        this.blocksDb = new DB('data/' + BLOCKS_FILE)
+        this.blocksDb = new DB(BLOCKS_FILE)
         this.blocks = this.blocksDb.read(Blocks,new Blocks()) // 读取blocks数组
 
         // 事件发射
@@ -61,17 +62,18 @@ class BlockChain {
         var nextIndex = previousBlock.index + 1
         var nextTimestamp = new Date().toUTCString()
         var difficulty = this.getDifficulty()
-
+        var hash = ""
         let nouce = 0
         while (true) {
-            let hash = Block.caculateHash(nextIndex, nextTimestamp, data, previousBlock.hash, difficulty, nouce)
+            hash = Block.caculateHash(nextIndex, nextTimestamp, data, previousBlock.hash, difficulty, nouce)
             if (this.hasMatchesDifficulty(hash,difficulty)) {
-                return new Block(nextIndex, nextTimestamp, difficulty, nouce, data, previousBlock.hash, hash)
+                break
             }
             nouce++
         }
-
-        return newBlock;
+        const newBlock = new Block(nextIndex, nextTimestamp, difficulty, nouce, data, previousBlock.hash, hash)
+        this.addBlock(newBlock)
+        return newBlock
         
     }
     createGeniusBlock() {
@@ -115,7 +117,7 @@ class BlockChain {
             newBlock.previoushash = this.getLastBlock().toHash()
             this.blocks.push(newBlock)
             this.blocksDb.write(this.blocks)
-            console.info(`Block added ${newBlock.id}`)
+            console.info(`Block added ${newBlock.index}`)
         }
     }
     // 检查新来的区块是否符合要求
@@ -124,8 +126,9 @@ class BlockChain {
             console.error(`Invalid index. Expected ${previousBlock.index + 1}, got ${newBlock.index}`)
             return false
         }
-        if (previousBlock.toHash()!== newBlock.previoushash) {
-            console.error("Invalid previous hash")
+        if (previousBlock.toHash() !== newBlock.previoushash) {
+            console.log(previousBlock.toHash() !== newBlock.previoushash)
+            console.error(`Invalid previous hash, \n${newBlock.previoushash}\n${previousBlock.toHash()}`)
             return false
         }
         if (newBlock.toHash()!== newBlock.hash) {
@@ -160,37 +163,4 @@ class BlockChain {
 
 }
 
-const miaoBlockChain = new BlockChain("miao")
-const block1 = new Block(2,new Date().toUTCString(),"Miao Block")
-miaoBlockChain.addBlock(block1)
-const transaction = new Transaction()
-transaction.id = MiaoCrypto.randomId()
-transaction.inputs = [
-    {
-        "transaction": MiaoCrypto.randomId(),
-        "index": 0,
-        "address": MiaoCrypto.randomId(),
-        "signature": MiaoCrypto.randomId()
-    },
-    {
-        "transaction": MiaoCrypto.randomId(),
-        "index": 1,
-        "address": MiaoCrypto.randomId(),
-        "signature": MiaoCrypto.randomId()
-    }
-]
-transaction.outputs = [
-    {
-        "amount": 1,
-        "address": MiaoCrypto.randomId()
-    },
-    {
-        "amount": 20,
-        "address": MiaoCrypto.randomId()
-    }
-]
-transaction.hash = transaction.toHash()
-
-miaoBlockChain.addTransaction(transaction)
-
-module.exports = miaoBlockChain 
+module.exports = BlockChain 

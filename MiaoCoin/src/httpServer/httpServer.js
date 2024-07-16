@@ -1,7 +1,7 @@
 const express = require('express')
 const bodyParser = require('body-parser')
 const path = require('path')
-const miaoBlockChain = require('../blockchain/blockchain')
+const BlockChain = require('../blockchain/blockchain')
 const P2P = require('./p2p')
 class HttpServer {
     constructor(node = null, blockChain) {
@@ -14,7 +14,7 @@ class HttpServer {
         this.app.get('/blocks', (req, res) => {
             res.send(blockChain.blocks)
         })
-        this.app.post('/mineBlock', (req, res) => {
+        this.app.get('/mineBlock', (req, res) => {
             const newBlock = blockChain.generateNextBlock('test')
             res.send(newBlock)
         })
@@ -53,6 +53,6 @@ class HttpServer {
 
 module.exports = HttpServer;
 
-console.log(miaoBlockChain.blocks)
-const miaoServer = new HttpServer({id:1, address:"localshot"},miaoBlockChain)
+const bc = new BlockChain()
+const miaoServer = new HttpServer({id:1, address:"localshot"},bc)
 miaoServer.listen('localhost', 3300)
