@@ -5,9 +5,12 @@ const Transaction = require("./transaction")
 const Transcations = require("./transactions")
 const MiaoCrypto = require("../util/miaoCrypto")
 const EventEmitter = require('events');
+const { hexToBinary } = require("../util/util")
 
 const BLOCKS_FILE = 'blocks.json'
 const Transcations_FILE = 'transactions.json'
+const BLOCK_GENERATION_INTERNAL = 10 // 10 seconds
+const DIFFICULTY_ADJUSTMENT_INTERVAL = 10 // 10 blocks
 
 class BlockChain {
     constructor(name) {
@@ -22,6 +25,7 @@ class BlockChain {
         this.init()
 
     }
+
     init() {
         // Create from genius block if blockchain is empty.
         if (this.blocks.length === 0) {
@@ -31,23 +35,54 @@ class BlockChain {
         }
 
     }
+    getDifficulty() {
+        const lastBlock = this.getLastBlock()
+        if (lastBlock.index % DIFFICULTY_ADJUSTMENT_INTERVAL === 0 && lastBlock.index !== 0) {
+            return this.getAdjustedDifficulty()
+        }
+        return this.getLastBlock().difficulty
+    }
+    getAdjustedDifficulty() {
+        const prevAdjustedBlock = this.blocks[this.blocks.length - DIFFICULTY_ADJUSTMENT_INTERVAL]
+        const timeExpected = BLOCK_GENERATION_INTERNAL * DIFFICULTY_ADJUSTMENT_INTERVAL
+        const timeTaken = new Date(this.getLastBlock().timestamp) - new Date(prevAdjustedBlock.timestamp)
+        if (timeTaken > timeExpected/2) {
+            return prevAdjustedBlock.difficulty + 1
+        } else if (timeTaken > timeExpected * 2) {
+            return prevAdjustedBlock.difficulty - 1;
+        } else {
+            return prevAdjustedBlock.difficulty;
+        }
+    }
+
+
     generateNextBlock (data) {
         var previousBlock = this.getLastBlock()
         var nextIndex = previousBlock.index + 1
         var nextTimestamp = new Date().toUTCString()
-        var newBlock = new Block(nextIndex, nextTimestamp, data)
-        newBlock.hash = newBlock.toHash()
+        var difficulty = this.getDifficulty()
+
+        let nouce = 0
+        while (true) {
+            let hash = Block.caculateHash(nextIndex, nextTimestamp, data, previousBlock.hash, difficulty, nouce)
+            if (this.hasMatchesDifficulty(hash,difficulty)) {
+                return new Block(nextIndex, nextTimestamp, difficulty, nouce, data, previousBlock.hash, hash)
+            }
+            nouce++
+        }
+
         return newBlock;
         
     }
     createGeniusBlock() {
-        return new Block(
-            0,
-            new Date().toISOString(),
-            'Genius Block',
-            '0',
-            "aaaaaaaaaaaa"
-        )
+        let index = 0
+        let timestamp = new Date().toUTCString()
+        let difficulty = 1
+        let nouce = 0
+        let data = "Genesis Block"
+        let previoushash = '0000000000000000'
+        let hash = Block.caculateHash(index, timestamp, data, previoushash, difficulty, nouce)
+        return new Block(index, timestamp, difficulty, nouce, data, previoushash, hash)
     }
 
     isValidBlockStructure(block) {
@@ -65,6 +100,11 @@ class BlockChain {
             }
         }
         return true
+    }
+    isValidTimeStamp(newBlock, previousBlock) {
+        return new Date(newBlock.timestamp) - 60 > new Date(previousBlock.timestamp) 
+            && new Date(newBlock.timestamp)  - 60 ? new Date()
+
     }
 
     getLastBlock() {
@@ -111,6 +151,13 @@ class BlockChain {
             console.error("Received blockchain is not longer than current blockchain.")
         } 
     }
+
+    hasMatchesDifficulty(hash, difficulty) {
+        const hashBinary = hexToBinary(hash)
+        const prefix = '0'.repeat(difficulty)
+        return hashBinary.startsWith(prefix)
+    }
+
 }
 
 const miaoBlockChain = new BlockChain("miao")
