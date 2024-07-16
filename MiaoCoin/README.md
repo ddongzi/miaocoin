@@ -4,9 +4,7 @@
 [](https://github.com/conradoqg/naivecoin/tree/master)
 
 
-# 从0构建区块链
 
-## 第1章：区块和区块链基础机构
 
 ### 1.1 定义区块结构
 1. Block类 {index, timestamp, data, previoushash}
