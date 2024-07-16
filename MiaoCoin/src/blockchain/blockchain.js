@@ -45,8 +45,17 @@ class BlockChain {
             0,
             new Date().toISOString(),
             'Genius Block',
-            '0'
+            '0',
+            "aaaaaaaaaaaa"
         )
+    }
+
+    isValidBlockStructure(block) {
+        return typeof block.index === 'number' &&
+            typeof block.timestamp ==='string' &&
+            typeof block.data ==='string' &&
+            typeof block.previoushash ==='string' &&
+            typeof block.hash ==='string'
     }
 
     getLastBlock() {

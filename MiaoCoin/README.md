@@ -1,5 +1,9 @@
 [js](https://www.runoob.com/js/js-howto.html)
 [200line blockchain](https://medium.com/@lhartikk/a-blockchain-in-200-lines-of-code-963cc1cc0e54#.dttbm9afr5)
+[Naivecoin: a tutorial for building a cryptocurrency](https://lhartikk.github.io/)
+[](https://github.com/conradoqg/naivecoin/tree/master)
+
+
 # 从0构建区块链
 
 ## 第1章：区块和区块链基础机构

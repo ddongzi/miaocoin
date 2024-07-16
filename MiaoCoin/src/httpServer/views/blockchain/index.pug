@@ -38,6 +38,7 @@ html
       p 这是一个展示区块链各种信息的页面，包括区块和节点信息。
 
       h2 区块链信息
+      p 区块链共有 #{blocks.length} 个区块。
       each block in blocks
         .block
           h3 区块 #{block.index}
