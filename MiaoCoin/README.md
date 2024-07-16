@@ -6,6 +6,9 @@
 
 [](https://github.com/conradoqg/naivecoin/tree/master)
 
+# 第一章 blockchain
+维持：1个区块链、1个账本（交易链）
+
 
 ### 1.1 定义区块结构
 1. Block类 {index, timestamp, data, previoushash}
@@ -146,6 +149,7 @@ An essential part of a node is to share and sync the blockchain with other nodes
 https://lhartikk.github.io/jekyll/update/2017/07/12/chapter3.html
 
 > However, creating transactions is still very difficult. We must manually create the inputs and outputs of the transactions and sign them using our private keys. This will change when we introduce wallets in the next chapter.
+## 地址
 
 ## Coinbase交易
 它是每个区块的第一笔交易，用于奖励矿工。Coinbase交易没有输入（txIns），因为它不花费之前的交易输出，而是从系统中创建新币。
@@ -173,6 +177,8 @@ The goal of the wallet is to create a more abstract interface **for the end user
 - 创建钱包
 - 看到余额
 - 发起转账
+
+- 
 ## Generating and storing the private key
 
 ## Wallet balance
