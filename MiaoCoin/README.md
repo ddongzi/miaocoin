@@ -147,4 +147,16 @@ https://lhartikk.github.io/jekyll/update/2017/07/12/chapter3.html
 
 > However, creating transactions is still very difficult. We must manually create the inputs and outputs of the transactions and sign them using our private keys. This will change when we introduce wallets in the next chapter.
 
+# 第四章 Wallet
+The goal of the wallet is to create a more abstract interface **for the end user.**
+
+
+功能：
+- 创建钱包
+- 看到余额
+- 发起转账
+## Generating and storing the private key
+
+## Wallet balance
+This consequently means that anyone can solve the balance of a given address.
 
