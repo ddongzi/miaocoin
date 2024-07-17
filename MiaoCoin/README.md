@@ -6,9 +6,13 @@
 
 [](https://github.com/conradoqg/naivecoin/tree/master)
 
-# 第一章 blockchain
-维持：1个区块链、1个账本（交易链）
-
+# 第二章 blockchain
+1. 读取存储策略
+每个node维持区块链的副本。区块链数据包括：blocks, transactions, utxouts, transaction pool(未确认交易池）
+- blocks : json存储
+- transactions: 属于blocks, 单独json存储
+- utxouts : json存储
+- transaction pool : 存储在内存中，不持久化
 
 ### 1.1 定义区块结构
 1. Block类 {index, timestamp, data, previoushash}
@@ -129,11 +133,16 @@ blocks为数据，[block]
     }
 ```
 
+
+Utxouts 更新
+
+
 - **作用**: 构建区块链的链式结构
 ## 选择最长的链
 ![image](https://github.com/user-attachments/assets/97bbcd73-eaf2-4e5f-8b76-11f9c79abea7)
 
-# 网络服务server
+
+# 第三章：网络服务
 
 ## httpServer
 httpServer模块主要负责区块链节点的HTTP API接口。具体作用包括：
