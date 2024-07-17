@@ -213,3 +213,6 @@ As a consequence, the nodes will now share two types of data when they communica
 
 ## Transaction pool
 Transaction pool is a structure that contains all of the “unconfirmed transactions” our node know of. 
+
+## Broadcasting
+- When a node receives an unconfirmed transaction it has not seen before, it will broadcast the full transaction pool to all peers.
