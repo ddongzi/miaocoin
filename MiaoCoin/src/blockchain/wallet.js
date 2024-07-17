@@ -31,7 +31,7 @@ class Wallet {
             .sum()
     }
     // 从自己的余额中扣除amount给adress
-    generateTransaction(receiverAdress, uTxOutputs,amount) {
+    generateTransaction(receiverAdress,amount, uTxOutputs,pool) {
         // console.log(`===> ${this.publicKey} send ${amount} to ${receiverAdress}`)
         const tx = new Transaction()
         

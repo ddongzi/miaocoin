@@ -22,6 +22,7 @@ class BlockChain {
         this.blocks = this.blocksDb.read(Blocks,new Blocks()) // 读取blocks数组
 
         this.uTxouts = []
+        this.pool = []
         // 事件发射
         this.emitter = new EventEmitter()
 
@@ -180,6 +181,13 @@ class BlockChain {
         const newBlock = this.generateNextBlock(blockData)
         this.addBlock(newBlock)
         return newBlock
+    }
+
+    // 生成一笔交易
+    generateTransactionToPool(address,amount) {
+        const tx = myWallet.generateTransaction(address,amount,this.uTxouts,this.pool);
+        this.pool.push(tx);
+        return tx;
     }
 
 }

@@ -3,19 +3,25 @@ const bodyParser = require('body-parser')
 const path = require('path')
 const BlockChain = require('../blockchain/blockchain')
 const P2P = require('./p2p')
+const { myWallet } = require('../blockchain/wallet')
 class HttpServer {
-    constructor(node = null, blockChain) {
+    constructor(port,node) {
         this.node = node
-        this.blockChain = blockChain
-        this.p2p = new P2P(4000)
+        this.blockchain = node.blockchain
+        this.p2p = node.p2p
+
+        this.port = port
+
         this.app = express()
         this.app.use(bodyParser.json())
 
+        this.app.set('views', './views')
+        this.app.set('view engine', 'pug')
         this.app.get('/blocks', (req, res) => {
-            res.send(blockChain.blocks)
+            res.send(this.blockchain.blocks);
         })
         this.app.get('/mineBlock', (req, res) => {
-            const newBlock = blockChain.generateNextBlock('test')
+            const newBlock = blockchain.generateNextBlock('test')
             res.send(newBlock)
         })
         this.app.get('/peers', (req,res) => {
@@ -33,14 +39,20 @@ class HttpServer {
             const resp = this.blockChain.generateNextBlockWithTransaction(address, amount);
             res.send(resp);
         })
-
+        this.app.post('/sendTransaction',(req,res) => {
+            const address = req.body.address;
+            const amount = req.body.amount;
+            const tx = this.blockchain.generateTransactionToPool(address,amount);
+            res.send(tx)
+        })
+        this.listen('localhost', this.port)
     }
     
     listen(host, port) {
         return new Promise((resolve, reject) => {
             this.server = this.app.listen(port, host, (err) => {
                 if (err) reject(err);
-                console.info(`Listening http on port: ${this.server.address().port}, to access the API documentation go to http://${host}:${this.server.address().port}/api-docs/`);
+                console.info(`Listening http on : http://localhost:${this.server.address().port}`);
                 resolve(this);
             });
         });
@@ -59,6 +71,3 @@ class HttpServer {
 
 module.exports = HttpServer;
 
-const bc = new BlockChain()
-const miaoServer = new HttpServer({id:1, address:"localshot"},bc)
-miaoServer.listen('localhost', 3300)
