@@ -130,14 +130,23 @@ blocks为数据，[block]
 ```
 
 - **作用**: 构建区块链的链式结构
-
-## HTTP服务：查询区块链
-
 ## 选择最长的链
 ![image](https://github.com/user-attachments/assets/97bbcd73-eaf2-4e5f-8b76-11f9c79abea7)
 
-# HTTPserver
-服务：
+# 网络服务server
+
+## httpServer
+httpServer模块主要负责区块链节点的HTTP API接口。具体作用包括：
+
+- 提供API接口：通过HTTP请求与区块链节点进行交互，比如查询区块、查询交易、提交新的交易、挖矿等操作。
+- 处理客户端请求：接受并处理来自客户端的各种HTTP请求，并返回相应的数据或执行相应的操作。
+- 与用户或其他应用程序交互：允许用户或其他应用程序通过HTTP接口与区块链节点进行通信，从而实现数据查询和操作。
+## p2p
+p2p模块（在Naivecoin项目的简化版本中主要通过HTTP实现）负责节点之间的对等通信。具体作用包括：
+- 节点之间的同步：实现区块链数据在不同节点之间的同步，包括区块和交易的传播。
+- 网络拓扑的维护：维护一个由区块链节点组成的对等网络，确保节点能够发现并连接到其他节点。
+- 数据一致性：确保所有节点上的区块链数据保持一致，即每个节点都拥有相同的区块链副本。
+- 交易和区块的传播：当一个节点接收到新的交易或挖到新的区块时，将这些信息传播给网络中的其他节点，以确保整个网络的数据是最新的。
 
 # node
 An essential part of a node is to share and sync the blockchain with other nodes.The following rules are used to keep the network in sync.
@@ -194,5 +203,18 @@ Let’s play out a bit more complex transaction scenario:
 
 ![image](https://github.com/user-attachments/assets/fccecfa2-af3f-44be-a021-940f1b7b199c)
 
+# 第五章：Transaction relaying
+Typically, when someone wants to include a transaction to the blockchain (= send coins to some address ) he broadcasts the transaction to the network and hopefully some node will mine the transaction to the blockchain.
+it means you don’t need to mine a block yourself, in order to include a transaction to the blockchain.
 
+As a consequence, the nodes will now share two types of data when they communicate with each other:
+- the state of the blockchain ( =the blocks and transactions that are included to the blockchain)
+- unconfirmed transactions ( =the transactions that are not yet included in the blockchain)
 
+## Transaction pool
+Transaction pool is a structure that contains all of the “unconfirmed transactions” our node know of. 
+
+## Broadcasting
+- When a node receives an unconfirmed transaction it has not seen before, it will broadcast the full transaction pool to all peers.
+
+## Updating the transaction pool
