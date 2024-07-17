@@ -33,6 +33,9 @@ class Wallet {
     // 从自己的余额中扣除amount给adress
     generateTransaction(receiverAdress,amount, uTxOutputs,pool) {
         // console.log(`===> ${this.publicKey} send ${amount} to ${receiverAdress}`)
+        
+        console.log(`generateTransaction , ${uTxOutputs}`)
+        
         const tx = new Transaction()
         
         const myUTxOutputs = uTxOutputs.filter((utxout) => {

@@ -1,7 +1,7 @@
 const Block = require("./block")
 const DB = require("../util/db")
 const Blocks = require("./blocks")
-const {Transaction} = require("./transaction")
+const {Transaction, UTxOutput} = require("./transaction")
 const Transactions = require("./transactions")
 const MiaoCrypto = require("../util/miaoCrypto")
 const EventEmitter = require('events');
@@ -11,6 +11,8 @@ const { Wallet, myWallet } = require("./wallet")
 
 const BLOCKS_FILE = BASE_PATH + "/src/blockchain/data/blocks.json";
 const Transactions_FILE = BASE_PATH + "/src/blockchain/data/transactions.json"
+const UTXOUTS_FILE = BASE_PATH + "/src/blockchain/data/utxouts.json"
+
 const BLOCK_GENERATION_INTERNAL = 3 // 10 seconds
 const DIFFICULTY_ADJUSTMENT_INTERVAL = 3 // 10 blocks
 
@@ -20,8 +22,8 @@ class BlockChain {
         this.transactions = this.transactionsDb.read(Transactions, new Transactions())
         this.blocksDb = new DB(BLOCKS_FILE)
         this.blocks = this.blocksDb.read(Blocks,new Blocks()) // 读取blocks数组
-
-        this.uTxouts = []
+        this.uTxoutsDb = new DB(UTXOUTS_FILE)
+        this.uTxouts = this.uTxoutsDb.read(null,[])
         this.pool = []
         // 事件发射
         this.emitter = new EventEmitter()
@@ -59,7 +61,7 @@ class BlockChain {
         }
     }
 
-
+    // 生成一个块 并加入链上
     generateNextBlock (data) {
         var previousBlock = this.getLastBlock()
         var nextIndex = previousBlock.index + 1
@@ -117,19 +119,20 @@ class BlockChain {
     }
     // 将一个block加入链
     addBlock(newBlock) {
+        // console.log(`add block ${newBlock.index}`)
         if (this.checkBlock(newBlock, this.getLastBlock())) {
             // console.log(`adding block ${JSON.stringify(newBlock)}`)
 
-            this.uTxouts = Transaction.processTransactions(newBlock.data,this.uTxouts)
+            this.uTxouts = this.processTransactions(newBlock.data)
             this.blocks.push(newBlock)
             this.blocksDb.write(this.blocks)
-            console.info(`Block added ${newBlock.index}`)
+            console.info(`Blockchain  added Block#${newBlock.index}`)
         }
     }
     // 检查新来的区块是否符合要求
     checkBlock(newBlock, previousBlock) {
         if (previousBlock.index + 1!== newBlock.index) {
-            console.error(`Invalid index. Expected ${previousBlock.index + 1}, got ${newBlock.index}`)
+            console.error(`CheckBlock failed :Invalid index. Expected ${previousBlock.index + 1}, got ${newBlock.index}`)
             return false
         }
         if (previousBlock.toHash() !== newBlock.previoushash) {
@@ -169,27 +172,53 @@ class BlockChain {
 
     // 通过一笔交易生成一个块
     generateNextBlockWithTransaction(address, amount) {
-        console.log(`Generate Next Block kWith Transaction, ${address} with ${amount}`)
+        console.log(`Generating Next Block kWith Transaction.....${this.uTxouts.length}`)
         if (!Transaction.isValidAddress(address)) {
             console.error("Invalid address");
         }
         const coinBaseTx = Transaction.generateConinBaseTransaction(myWallet.address, this.getLastBlock().index + 1)
-        this.uTxouts = Transaction.updateUnspentTxOutputs(this.uTxouts, [coinBaseTx])
-        const tx = new Wallet().generateTransaction(address, this.uTxouts, amount)
+        const tx = new Wallet().generateTransaction(address,amount, this.uTxouts, this.pool)
         const blockData = [coinBaseTx, tx];
-        console.log(JSON.stringify(blockData));
         const newBlock = this.generateNextBlock(blockData)
-        this.addBlock(newBlock)
         return newBlock
     }
 
     // 生成一笔交易
     generateTransactionToPool(address,amount) {
+        console.log(`Generating transaction to pool, utxouts ${this.uTxouts} ,pool ${this.pool}`)
         const tx = myWallet.generateTransaction(address,amount,this.uTxouts,this.pool);
         this.pool.push(tx);
+        console.log(`After, utxouts ${this.uTxouts} ,pool ${this.pool}`)
+
         return tx;
     }
 
+
+    // 新的交易来更新 utxOuts
+    updateUnspentTxOutputs(transactions) {
+        console.log(`updateUnspentTxOutputs ...`)
+        // TODO : 有误
+        const newUnspentTxOutputs = transactions.map((t) => {
+            return t.outputs.map((txout,index) => new UTxOutput(t.id,index, txout.address,txout.amount))
+        }).reduce((a,b) => a.concat(b), []);
+        const consumedTxOutputs = transactions.map((t) => t.inputs)
+            .reduce((a, b) => a.concat(b), [])
+            .map((txin) => new UTxOutput(txin.txOutId, txin.txOutIndex,'',0))
+
+        const resultingUnspentTxOuts = this.uTxouts.filter((utxout) => {
+            return !Transaction.findUnspentTxOut(utxout.id, utxout.index, consumedTxOutputs) // 保留没有被消费的
+        }).concat(newUnspentTxOutputs);
+
+        // console.log(`newUnspentTxOutputs: ${JSON.stringify(newUnspentTxOutputs)}\n consumedTxOutputs: ${JSON.stringify(consumedTxOutputs)}`)
+        console.log(`Old uxOutputs: ${JSON.stringify(this.uTxouts)}\n New uxOutputs: ${JSON.stringify(resultingUnspentTxOuts)}`)
+        return resultingUnspentTxOuts
+    }
+
+    // shan
+    processTransactions(transactions) {
+        // TODO:验证是否有效交易。。
+        return this.updateUnspentTxOutputs(transactions);
+    }
 }
 
 module.exports = BlockChain 

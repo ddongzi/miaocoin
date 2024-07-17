@@ -36,7 +36,7 @@ class HttpServer {
         this.app.post('/mineTransaction', (req,res) => {
             const address = req.body.address;
             const amount = req.body.amount;
-            const resp = this.blockChain.generateNextBlockWithTransaction(address, amount);
+            const resp = this.blockchain.generateNextBlockWithTransaction(address, amount);
             res.send(resp);
         })
         this.app.post('/sendTransaction',(req,res) => {

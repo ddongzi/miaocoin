@@ -52,23 +52,8 @@ class Transaction {
         return this.inputs[index].signature
     }
 
-    // 新的交易来更新 utxOuts
-    static updateUnspentTxOutputs(utxOuts,transactions) {
-        const newUnspentTxOutputs = transactions.map((t) => {
-            return t.outputs.map((txout,index) => new UTxOutput(t.id,index, txout.address,txout.amount))
-        }).reduce((a,b) => a.concat(b), []);
-        const consumedTxOutputs = transactions.map((t) => t.inputs)
-            .reduce((a, b) => a.concat(b), [])
-            .map((txin) => new UTxOutput(txin.txOutId, txin.txOutIndex,'',0))
 
-        const resultingUnspentTxOuts = utxOuts.filter((utxout) => {
-            return !Transaction.findUnspentTxOut(utxout.id, utxout.index, consumedTxOutputs) // 保留没有被消费的
-        }).concat(newUnspentTxOutputs);
-
-        // console.log(`newUnspentTxOutputs: ${JSON.stringify(newUnspentTxOutputs)}\n consumedTxOutputs: ${JSON.stringify(consumedTxOutputs)}`)
-        // console.log(`Old uxOutputs: ${JSON.stringify(utxOuts)}\n New uxOutputs: ${JSON.stringify(newUnspentTxOutputs)}`)
-        return resultingUnspentTxOuts
-    }
+    
 
     // 交易有效性验证
     isValidTransactionStructure(transaction) {
@@ -113,16 +98,11 @@ class Transaction {
         t.inputs = [txIn];
         t.outputs = [new TxOutput(address, COINBASE_AMOUNT)];
         t.id = Transaction.getTransactionId(t);
-        console.log(`Coinbase transaction created. ${JSON.stringify(t)}`);
+        console.log(`Coinbase transaction created....`);
 
         return t;
     }
 
-    // 根据交易更新 utxouts
-    static processTransactions(transactions, utxOuts) {
-        // TODO:验证是否有效交易。。
 
-        return Transaction.updateUnspentTxOutputs(utxOuts,transactions);
-    }
 }
 module.exports = {Transaction, TxInput, TxOutput, UTxOutput}
