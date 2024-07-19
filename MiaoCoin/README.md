@@ -226,4 +226,17 @@ Transaction pool is a structure that contains all of the “unconfirmed transact
 ## Broadcasting
 - When a node receives an unconfirmed transaction it has not seen before, it will broadcast the full transaction pool to all peers.
 
+
 ## Updating the transaction pool
+
+
+
+
+
+
+
+
+
+
+
+
