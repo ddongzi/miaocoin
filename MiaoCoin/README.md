@@ -224,14 +224,16 @@ As a consequence, the nodes will now share two types of data when they communica
 Transaction pool is a structure that contains all of the “unconfirmed transactions” our node know of. 
 
 ## Broadcasting
-- When a node receives an unconfirmed transaction it has not seen before, it will broadcast the full transaction pool to all peers.
-
+√ When a node receives an unconfirmed transaction it has not seen before, it will broadcast the full transaction pool to all peers.
+- When a node first connects to another node, it will query for the transaction pool of that node.
 
 ## Updating the transaction pool
 
+## Validating received unconfirmed transactions
+避免对同一笔钱进行消费
 
-
-
+## From transaction pool to blockchain
+未确认交易上到区块链。This is simple: when a node starts to mine a block, it will include the transactions from the transaction pool to the new block candidate.
 
 
 
