@@ -34,7 +34,7 @@ class Wallet {
     generateTransaction(receiverAdress,amount, uTxOutputs,pool) {
         // console.log(`===> ${this.publicKey} send ${amount} to ${receiverAdress}`)
         
-        console.log(`generateTransaction , ${uTxOutputs}`)
+        console.log(`generateTransaction......`)
         
         const tx = new Transaction()
         

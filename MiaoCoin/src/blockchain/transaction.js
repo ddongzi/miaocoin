@@ -98,6 +98,7 @@ class Transaction {
         t.inputs = [txIn];
         t.outputs = [new TxOutput(address, COINBASE_AMOUNT)];
         t.id = Transaction.getTransactionId(t);
+        
         console.log(`Coinbase transaction created....`);
 
         return t;

@@ -123,7 +123,6 @@ class BlockChain {
         if (this.checkBlock(newBlock, this.getLastBlock())) {
             // console.log(`adding block ${JSON.stringify(newBlock)}`)
 
-            this.uTxouts = this.processTransactions(newBlock.data)
             this.blocks.push(newBlock)
             this.blocksDb.write(this.blocks)
             console.info(`Blockchain  added Block#${newBlock.index}`)
@@ -177,7 +176,9 @@ class BlockChain {
             console.error("Invalid address");
         }
         const coinBaseTx = Transaction.generateConinBaseTransaction(myWallet.address, this.getLastBlock().index + 1)
+        this.updateUnspentTxOutputs([coinBaseTx])
         const tx = new Wallet().generateTransaction(address,amount, this.uTxouts, this.pool)
+        this.updateUnspentTxOutputs([tx])
         const blockData = [coinBaseTx, tx];
         const newBlock = this.generateNextBlock(blockData)
         return newBlock
@@ -196,8 +197,7 @@ class BlockChain {
 
     // 新的交易来更新 utxOuts
     updateUnspentTxOutputs(transactions) {
-        console.log(`updateUnspentTxOutputs ...`)
-        // TODO : 有误
+        console.log(`updateUnspentTxOutputs ... `)
         const newUnspentTxOutputs = transactions.map((t) => {
             return t.outputs.map((txout,index) => new UTxOutput(t.id,index, txout.address,txout.amount))
         }).reduce((a,b) => a.concat(b), []);
@@ -207,11 +207,14 @@ class BlockChain {
 
         const resultingUnspentTxOuts = this.uTxouts.filter((utxout) => {
             return !Transaction.findUnspentTxOut(utxout.id, utxout.index, consumedTxOutputs) // 保留没有被消费的
-        }).concat(newUnspentTxOutputs);
+        }).concat(newUnspentTxOutputs)
 
-        // console.log(`newUnspentTxOutputs: ${JSON.stringify(newUnspentTxOutputs)}\n consumedTxOutputs: ${JSON.stringify(consumedTxOutputs)}`)
+
+        console.log(`newUnspentTxOutputs: ${JSON.stringify(newUnspentTxOutputs)}\n consumedTxOutputs: ${JSON.stringify(consumedTxOutputs)}`)
         console.log(`Old uxOutputs: ${JSON.stringify(this.uTxouts)}\n New uxOutputs: ${JSON.stringify(resultingUnspentTxOuts)}`)
-        return resultingUnspentTxOuts
+        this.uTxouts = resultingUnspentTxOuts
+        this.uTxoutsDb.write(this.uTxouts)
+
     }
 
     // shan
