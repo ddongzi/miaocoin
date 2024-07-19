@@ -30,7 +30,7 @@ class Wallet {
             .map(utxout => utxout.amount)
             .sum()
     }
-    // 从自己的余额中扣除amount给adress
+    // 生成一笔交易（未确认交易：不添加到区块链）：从自己的余额中扣除amount给adress。
     generateTransaction(receiverAdress,amount, uTxOutputs,pool) {
         // console.log(`===> ${this.publicKey} send ${amount} to ${receiverAdress}`)
         

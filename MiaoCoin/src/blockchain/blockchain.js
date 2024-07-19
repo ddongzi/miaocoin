@@ -189,7 +189,7 @@ class BlockChain {
         console.log(`Generating transaction to pool, utxouts ${this.uTxouts} ,pool ${this.pool}`)
         const tx = myWallet.generateTransaction(address,amount,this.uTxouts,this.pool);
         this.pool.push(tx);
-        console.log(`After, utxouts ${this.uTxouts} ,pool ${this.pool}`)
+        console.log(`After generateTransactionToPool, pool ${JSON.stringify(this.pool)}`)
 
         return tx;
     }
@@ -206,7 +206,7 @@ class BlockChain {
             .map((txin) => new UTxOutput(txin.txOutId, txin.txOutIndex,'',0))
 
         const resultingUnspentTxOuts = this.uTxouts.filter((utxout) => {
-            return !Transaction.findUnspentTxOut(utxout.id, utxout.index, consumedTxOutputs) // 保留没有被消费的
+            !consumedTxOutputs.find((t) => t.txOutId === utxout.txOutId && t.txOutIndex === utxout.txOutIndex)
         }).concat(newUnspentTxOutputs)
 
 
