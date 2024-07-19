@@ -1,3 +1,4 @@
+const { write } = require('fs-extra');
 const WebSocket = require('ws');
 
 
@@ -13,9 +14,11 @@ class P2P {
     
     constructor(port,node) {
         this.port = port
+        this.node = node
+
         this.sockets = []
         this.initServer()
-        this.node = node
+
     }
     initServer() {
         this.server = new WebSocket.Server({port: this.port})
@@ -44,7 +47,7 @@ class P2P {
     initMessageHandler(socket) {
         socket.on('message', (data) => {
             const message = JSON.parse(data);
-            console.log(`Received message from ${message.type}, ${JSON.stringify(message.data)}`);
+            console.log(`Received message :  ${JSON.stringify(message)}`);
 
             switch (message.type) {
                 case MessageType.QUERY_LATEST:
@@ -57,16 +60,12 @@ class P2P {
                     this.receiveNewBlock(message.data);
                     break;
                 case MessageType.QUERY_TRANSACTION_POOL:
-                    this.queryTransactionPool(ws);
+                    const msg = this.node.queryTransactionPool();
+                    socket.send(JSON.stringify(msg))
                     break;
                 case MessageType.RESPONSE_TRANSACTION_POOL:
                     // 收到未确认的交易
-                    const receiveTransactions = message.data
-                    receiveTransactions.forEach((tx) =>{
-                        this.node.receiveNewTransaction(tx);
-                        this.node.broadCastTransactionPool()
-                    })
-                    socket.send("Response successfully received")
+                    this.node.responseTransactionPool(message.data)
                     break;
             }
         });
@@ -85,6 +84,14 @@ class P2P {
             console.error('WebSocket error observed:', error);
         });
     }
-    
+
+
+    // 广播： 
+    broadcast(msg) {
+        console.log(`broadcast ${JSON.stringify(msg)}`);
+        this.sockets.forEach(socket => socket.send(JSON.stringify(msg)))
+    }
+
+
 }
-module.exports = P2P
+module.exports = {P2P,MessageType}

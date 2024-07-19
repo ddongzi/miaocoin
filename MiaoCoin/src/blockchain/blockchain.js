@@ -169,7 +169,7 @@ class BlockChain {
         return hashBinary.startsWith(prefix)
     }
 
-    // 通过一笔交易生成一个块
+    // 通过一笔交易生成一个块:
     generateNextBlockWithTransaction(address, amount) {
         console.log(`Generating Next Block kWith Transaction.....${this.uTxouts.length}`)
         if (!Transaction.isValidAddress(address)) {
@@ -183,14 +183,19 @@ class BlockChain {
         const newBlock = this.generateNextBlock(blockData)
         return newBlock
     }
+    // 通过未确认交易池 生成一个块
+    generateNextBlockWithPool() {
+        const coinBaseTx = Transaction.generateConinBaseTransaction(myWallet.address, this.getLastBlock().index + 1)
+        console.log(`generateNextBlockWithPool....${JSON.stringify([coinBaseTx,this.pool])}`)
+        this.updateUnspentTxOutputs([coinBaseTx].concat(this.pool))
+        return this.generateNextBlock([coinBaseTx].concat(this.pool))
+    }
 
     // 生成一笔交易
     generateTransactionToPool(address,amount) {
         console.log(`Generating transaction to pool, utxouts ${this.uTxouts} ,pool ${this.pool}`)
         const tx = myWallet.generateTransaction(address,amount,this.uTxouts,this.pool);
-        this.pool.push(tx);
-        console.log(`After generateTransactionToPool, pool ${JSON.stringify(this.pool)}`)
-
+        this.addToTransactionPool(tx)
         return tx;
     }
 
@@ -210,11 +215,10 @@ class BlockChain {
         }).concat(newUnspentTxOutputs)
 
 
-        console.log(`newUnspentTxOutputs: ${JSON.stringify(newUnspentTxOutputs)}\n consumedTxOutputs: ${JSON.stringify(consumedTxOutputs)}`)
-        console.log(`Old uxOutputs: ${JSON.stringify(this.uTxouts)}\n New uxOutputs: ${JSON.stringify(resultingUnspentTxOuts)}`)
+        // console.log(`newUnspentTxOutputs: ${JSON.stringify(newUnspentTxOutputs)}\n consumedTxOutputs: ${JSON.stringify(consumedTxOutputs)}`)
+        // console.log(`Old uxOutputs: ${JSON.stringify(this.uTxouts)}\n New uxOutputs: ${JSON.stringify(resultingUnspentTxOuts)}`)
         this.uTxouts = resultingUnspentTxOuts
         this.uTxoutsDb.write(this.uTxouts)
-
     }
 
     // shan
@@ -222,6 +226,34 @@ class BlockChain {
         // TODO:验证是否有效交易。。
         return this.updateUnspentTxOutputs(transactions);
     }
+
+    // 尝试将tx加入池子
+    addToTransactionPool(tx) {
+        if (this.isValidTxForPool(tx)) {
+            this.pool.push(tx)
+            return tx
+        }
+        return {"tx":"error"}
+    }
+
+    // 未确认交易 加入 POOL之前校验: 1. 不能重复：此次Input的钱不能出现在之前的池子input里面(一份钱不能用两次)
+    isValidTxForPool(targetTx) {
+        let res = true
+        this.pool.forEach(tx => {
+            tx.inputs.forEach(txInput => {
+                const find = targetTx.inputs.find(targetTxInput => 
+                    targetTxInput.txOutId === txInput.txOutId &&
+                    targetTxInput.txOutIndex === txInput.txOutIndex
+                )
+                if (find) {
+                    res = false
+                }
+            })
+        })
+        console.log(`check valid tx for pool ${res}`)
+        return res;
+    }
+
 }
 
 module.exports = BlockChain 

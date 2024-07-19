@@ -2,7 +2,7 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const path = require('path')
 const BlockChain = require('../blockchain/blockchain')
-const P2P = require('./p2p')
+const {P2P} = require('./p2p')
 const { myWallet } = require('../blockchain/wallet')
 class HttpServer {
     constructor(port,node) {
@@ -33,16 +33,21 @@ class HttpServer {
             this.p2p.connectPeer(peer)
             res.send('Connected to peer')
         })
-        this.app.post('/mineTransaction', (req,res) => {
+        this.app.post('/mineTransactionWithTransfer', (req,res) => {
             const address = req.body.address;
             const amount = req.body.amount;
             const resp = this.blockchain.generateNextBlockWithTransaction(address, amount);
+            res.send(resp);
+        })
+        this.app.get('/mineTransactionWithPool', (req,res) => {
+            const resp = this.blockchain.generateNextBlockWithPool();
             res.send(resp);
         })
         this.app.post('/sendTransaction',(req,res) => {
             const address = req.body.address;
             const amount = req.body.amount;
             const tx = this.blockchain.generateTransactionToPool(address,amount);
+            this.node.broadcastTransactionPool()
             res.send(tx)
         })
         this.listen('localhost', this.port)

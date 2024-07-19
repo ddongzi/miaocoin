@@ -6,6 +6,8 @@
 
 [](https://github.com/conradoqg/naivecoin/tree/master)
 
+[websocket测试](https://wstool.js.org/)
+
 # 第二章 blockchain
 1. 读取存储策略
 每个node维持区块链的副本。区块链数据包括：blocks, transactions, utxouts, transaction pool(未确认交易池）
