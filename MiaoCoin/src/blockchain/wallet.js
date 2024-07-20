@@ -26,9 +26,10 @@ class Wallet {
     }
 
     static getBalance(address, unspentTxOutputs) {
+        // console.log(`getBalance: ${address}, ${JSON.stringify(unspentTxOutputs)}`)
         return unspentTxOutputs.filter(utxout => utxout.address === address)
             .map(utxout => utxout.amount)
-            .sum()
+            .reduce((sum, amount) => sum + amount, 0);
     }
     // 生成一笔交易（未确认交易：不添加到区块链）：从自己的余额中扣除amount给adress。
     generateTransaction(receiverAdress,amount, uTxOutputs,pool) {

@@ -33,10 +33,15 @@ class Transaction {
 
     // 生成交易ID
     static getTransactionId(transaction) {
+        console.log(transaction.inputs[0])
         const inputContent = transaction.inputs.map((t) => t.txOutId + t.txOutIndex)
             .reduce((a,b) => a+b, '')
         const outputContent = transaction.outputs.map((t) =>t.address + t.amount)
             .reduce((a,b) => a+b,'')
+
+        console.log("Input Content:", inputContent);
+        console.log("Output Content:", outputContent);
+        console.log("Concatenated Content:", inputContent + outputContent);
         return MiaoCrypto.hash(inputContent + outputContent)
     }
     

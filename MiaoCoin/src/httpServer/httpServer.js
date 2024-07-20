@@ -3,7 +3,9 @@ const bodyParser = require('body-parser')
 const path = require('path')
 const BlockChain = require('../blockchain/blockchain')
 const {P2P} = require('./p2p')
-const { myWallet } = require('../blockchain/wallet')
+const { myWallet, Wallet } = require('../blockchain/wallet')
+const cors = require('cors');
+
 class HttpServer {
     constructor(port,node) {
         this.node = node
@@ -13,6 +15,9 @@ class HttpServer {
         this.port = port
 
         this.app = express()
+        // 允许所有来源（开发阶段）
+        this.app.use(cors());
+        
         this.app.use(bodyParser.json())
 
         this.app.set('views', './views')
@@ -20,6 +25,28 @@ class HttpServer {
         this.app.get('/blocks', (req, res) => {
             res.send(this.blockchain.blocks);
         })
+        this.app.get('/block/:hash', (req, res) => {
+            const hash = req.params.hash
+            const block = this.blockchain.getBlockByHash(hash)
+            if (!block) {
+                return res.status(404).send('Block not found')
+            }
+            res.send(block)
+        })
+        // 
+        this.app.get('/transaction/:id', (req, res) => {
+            const id = req.params.id
+            const tx = this.blockchain.getTransactionByID(id)
+            res.send(tx)
+        })
+        this.app.get('/address/:address', (req, res) => {
+            const myUtxout = this.blockchain.uTxouts.filter((utxout) => {
+                return utxout.address === req.params.address
+            })
+            res.send({'utxouts':myUtxout})
+
+        })
+        // 
         this.app.get('/mineBlock', (req, res) => {
             const newBlock = blockchain.generateNextBlock('test')
             res.send(newBlock)
@@ -49,6 +76,16 @@ class HttpServer {
             const tx = this.blockchain.generateTransactionToPool(address,amount);
             this.node.broadcastTransactionPool()
             res.send(tx)
+        })
+        this.app.get('/wallet',(req, res)=> {
+            res.send( {
+                'name':myWallet.name,
+                'address':myWallet.address,
+                'balance':Wallet.getBalance(myWallet.address, this.blockchain.uTxouts)
+            })
+        })
+        this.app.get('/getTransactionHistory',(req,res) => {
+            res.send(this.blockchain.getTransactionHistory())
         })
         this.listen('localhost', this.port)
     }

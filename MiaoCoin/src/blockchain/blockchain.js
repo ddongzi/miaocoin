@@ -191,7 +191,7 @@ class BlockChain {
         return this.generateNextBlock([coinBaseTx].concat(this.pool))
     }
 
-    // 生成一笔交易
+    // 生成一笔交易 放入池子
     generateTransactionToPool(address,amount) {
         console.log(`Generating transaction to pool, utxouts ${this.uTxouts} ,pool ${this.pool}`)
         const tx = myWallet.generateTransaction(address,amount,this.uTxouts,this.pool);
@@ -253,7 +253,25 @@ class BlockChain {
         console.log(`check valid tx for pool ${res}`)
         return res;
     }
+    getBlockByHash(hash) {
+        return this.blocks.filter(block => block.hash === hash)
+    }
+    getTransactionByID(id) {
+        return this.blocks.map(block => block.data)
+            .flat()
+            .filter(tx => tx.id === id)
+    }
 
+    getTransactionHistory(address) {
+        return this.blocks.map(block => block.data)
+           .flat()
+           .filter(tx => tx.outputs.find(output => output.address === address))
+           .map(tx => ({
+                txId: tx.id,
+                amount: tx.outputs.find(output => output.address === address).amount,
+                timestamp: tx.timestamp
+            }))
+    }
 }
 
 module.exports = BlockChain 
