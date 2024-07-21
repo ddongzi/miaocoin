@@ -143,6 +143,10 @@ Utxouts 更新
 ## 选择最长的链
 ![image](https://github.com/user-attachments/assets/97bbcd73-eaf2-4e5f-8b76-11f9c79abea7)
 
+# 交易与运行机制
+
+# 共识机制（工作量证明）：
+用户发起交易后，网络所有节点都会收到请求，但并不是所有节点都有能力记录交易。如POW工作量证明，产生公认唯一的节点来记录。
 
 # 第三章：网络服务
 
