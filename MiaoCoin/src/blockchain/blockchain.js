@@ -9,30 +9,34 @@ const  hexToBinary  = require("../util/util")
 const {BASE_PATH} = require("../config")
 const { Wallet, myWallet } = require("./wallet")
 
-const BLOCKS_FILE = BASE_PATH + "/src/blockchain/data/blocks.json";
-const Transactions_FILE = BASE_PATH + "/src/blockchain/data/transactions.json"
-const UTXOUTS_FILE = BASE_PATH + "/src/blockchain/data/utxouts.json"
+const BLOCKS_FILE = "/blocks.json";
+const Transactions_FILE = "/transactions.json"
+const UTXOUTS_FILE = "/utxouts.json"
 
 const BLOCK_GENERATION_INTERNAL = 3 // 10 seconds
 const DIFFICULTY_ADJUSTMENT_INTERVAL = 3 // 10 blocks
 
 class BlockChain {
-    constructor(name) {
-        this.transactionsDb = new DB(Transactions_FILE)
+    // 每个节点都有一份区块链副本，
+    constructor(name,dataPath) {
+        this.dataPath = dataPath
+        this.name = name
+
+        this.transactionsDb = new DB(dataPath + Transactions_FILE)
         this.transactions = this.transactionsDb.read(Transactions, new Transactions())
-        this.blocksDb = new DB(BLOCKS_FILE)
+        this.blocksDb = new DB(dataPath + BLOCKS_FILE)
         this.blocks = this.blocksDb.read(Blocks,new Blocks()) // 读取blocks数组
-        this.uTxoutsDb = new DB(UTXOUTS_FILE)
+        this.uTxoutsDb = new DB(dataPath + UTXOUTS_FILE)
         this.uTxouts = this.uTxoutsDb.read(null,[])
         this.pool = []
         // 事件发射
         this.emitter = new EventEmitter()
 
-        this.init()
-
     }
 
+    // 初始节点使用
     init() {
+        console.log("#0 init blockchain..")
         // Create from genius block if blockchain is empty.
         if (this.blocks.length === 0) {
             console.log("Blockchain is empty, creating from genesis block")

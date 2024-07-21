@@ -1,10 +1,10 @@
 const { existsSync, writeFile, writeFileSync, readFileSync } = require("fs-extra");
-const {BASE_PATH} =  require("../config");
 const MiaoCrypto = require("../util/miaoCrypto");
 const {Transaction, TxInput,TxOutput,UTxOutput} = require("./transaction");
+const { WALLET_PATH } = require("../config");
 
-const PRIVATEKEY_FILE = BASE_PATH + 'src/'+ 'privkey.pem';
-const PUBLICKEY_FILE = BASE_PATH +'src/'+ 'pubkey.pem';
+const PRIVATEKEY_FILE = WALLET_PATH + '/privkey.pem';
+const PUBLICKEY_FILE = WALLET_PATH + '/pubkey.pem';
 
 class Wallet {
     constructor(name) {

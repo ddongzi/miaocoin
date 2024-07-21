@@ -15,3 +15,6 @@ export const transfer = (amount, address) => apiClient.post('/sendTransaction', 
     amount
 })
 export const getTransactionHistory = () => apiClient.get('/getTransactionHistory');
+export const connectToP2PNode = (peer) => apiClient.post('/addPeer', {
+    peer
+});

@@ -42,9 +42,4 @@ class Node {
     }
 }
 
-
-const bc = new BlockChain('miao')
-const node = new Node(bc)
-const p2p = new P2P(4000,node)
-const http = new HttpServer(3000,node)
-node.initNetwork(p2p,http)
+module.exports = Node

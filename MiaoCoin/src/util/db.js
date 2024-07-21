@@ -7,7 +7,7 @@ class DB {
     }
     read(prototype, defaultData) {
         if (!fs.existsSync(this.filePath)) {
-            console.log("Could not find", this.filePath)
+            fs.writeFileSync(this.filePath, '')
             return defaultData;
         }
 
