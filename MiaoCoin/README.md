@@ -7,6 +7,7 @@
 [](https://github.com/conradoqg/naivecoin/tree/master)
 
 [websocket测试](https://wstool.js.org/)
+[区块链原理、架构与应用]
 
 # 第二章 blockchain
 1. 读取存储策略
@@ -144,9 +145,16 @@ Utxouts 更新
 ![image](https://github.com/user-attachments/assets/97bbcd73-eaf2-4e5f-8b76-11f9c79abea7)
 
 # 交易与运行机制
+![image](https://github.com/user-attachments/assets/a3722f04-2697-494d-b62e-0ed1e66e85fd)
+1. 各节点收到未确认交易时，放入自己Pool中，形成等待上链的区块。
+   Q：节点什么时候才能产生块？A：触发条件：交易池数量达到上限，固定时间间隔等...。
+2. 通过共识机制决定哪个节点上的块胜出。
+3. 新区快广播到各节点验证，
+4. 超过51%节点验证成功后，上链
+
 
 # 共识机制（工作量证明）：
-用户发起交易后，网络所有节点都会收到请求，但并不是所有节点都有能力记录交易。如POW工作量证明，产生公认唯一的节点来记录。
+用户发起交易后，网络所有节点都会收到请求，但并不是所有节点都有能力记录交易。如POW工作量证明（挖矿），产生公认唯一的节点来记录。
 
 # 第三章：网络服务
 
