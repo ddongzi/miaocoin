@@ -1,6 +1,6 @@
 const BlockChain = require("../blockchain/blockchain");
-const HttpServer = require("../httpServer/httpServer");
-const {P2P,MessageType} = require("../httpServer/p2p");
+const HttpServer = require("../net/httpServer");
+const {P2P,MessageType} = require("../net/p2p");
 
 class Node {
     constructor(blockchain) {

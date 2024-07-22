@@ -18,3 +18,6 @@ export const getTransactionHistory = () => apiClient.get('/getTransactionHistory
 export const connectToP2PNode = (peer) => apiClient.post('/addPeer', {
     peer
 });
+
+export const importWallet = () => apiClient.get('/importWallet');
+export const createWallet = () => apiClient.post('/createWallet');

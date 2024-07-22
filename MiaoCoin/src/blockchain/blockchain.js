@@ -1,13 +1,13 @@
 const Block = require("./block")
 const DB = require("../util/db")
 const Blocks = require("./blocks")
-const {Transaction, UTxOutput} = require("./transaction")
+const {Transaction, UTxOutput, TxInput, TxOutput} = require("./transaction")
 const Transactions = require("./transactions")
 const MiaoCrypto = require("../util/miaoCrypto")
 const EventEmitter = require('events');
 const  hexToBinary  = require("../util/util")
 const {BASE_PATH} = require("../config")
-const { Wallet, myWallet } = require("./wallet")
+const { Wallet, myWallet } = require("../../../miao-blockchain-app/src/wallet")
 
 const BLOCKS_FILE = "/blocks.json";
 const Transactions_FILE = "/transactions.json"
@@ -277,6 +277,69 @@ class BlockChain {
                 amount: tx.outputs.find(output => output.address === address).amount,
                 timestamp: tx.timestamp
             }))
+    }
+
+    // 获取某个地址余额
+    getBalance(address) {
+        // console.log(`getBalance: ${address}, ${JSON.stringify(unspentTxOutputs)}`)
+        return this.uTxouts.filter(utxout => utxout.address === address)
+            .map(utxout => utxout.amount)
+            .reduce((sum, amount) => sum + amount, 0);
+    }
+
+    // 生成一笔交易（未确认交易：不添加到区块链）：从自己的余额中扣除amount给adress。
+    generateTransaction(receiverAdress,amount, uTxOutputs,pool) {
+        // console.log(`===> ${this.publicKey} send ${amount} to ${receiverAdress}`)
+        
+        console.log(`generateTransaction......`)
+        
+        const tx = new Transaction()
+        
+        const myUTxOutputs = uTxOutputs.filter((utxout) => {
+            return utxout.address === this.address
+        })
+        // 找到够支付的utxout
+        const needUTxOutputs = []
+        let currentAmount = 0
+        var leftAmount = 0
+        for (let i = 0; i < myUTxOutputs.length; i++) {
+            currentAmount += myUTxOutputs[i].amount
+            needUTxOutputs.push(myUTxOutputs[i])
+            if (currentAmount >= amount) {
+                leftAmount = currentAmount - amount
+                break
+            }
+        }
+        // console.log(`找到够支付的utxout, ${leftAmount}, NEED : ${JSON.stringify(needUTxOutputs)}}`)
+        // 将其转化未交易的输入
+        const txInputs = needUTxOutputs.map(utxout => {
+            const unsignedTxInput = new TxInput(utxout.txOutId, utxout.txOutIndex,'')
+            return unsignedTxInput
+        })
+
+        // console.log(`将其转化未交易的输入,  ${JSON.stringify(txInputs)}}`)
+
+        // 输出
+        const txOutputs =[]
+        const txOutput = new TxOutput(receiverAdress, amount)
+        if (leftAmount === 0) {
+            txOutputs.push(txOutput)
+        } else {
+            const leftTxOutput = new TxOutput(this.address, leftAmount)
+            txOutputs.push(txOutput)
+            txOutputs.push(leftTxOutput)
+
+        }
+        //console.log(`输出,  ${JSON.stringify(txOutputs)}`)
+        tx.id = Transaction.getTransactionId(tx)
+        tx.inputs = txInputs
+        tx.inputs = txInputs.map((txin,index) => {
+            tx.signatureTXInputs(this.privateKey,index)
+            return txin
+        })
+        tx.outputs = txOutputs
+        tx.hash = tx.toHash()
+        return tx
     }
 }
 

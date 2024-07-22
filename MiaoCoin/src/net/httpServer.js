@@ -3,7 +3,7 @@ const bodyParser = require('body-parser')
 const path = require('path')
 const BlockChain = require('../blockchain/blockchain')
 const {P2P} = require('./p2p')
-const { myWallet, Wallet } = require('../blockchain/wallet')
+const { myWallet, Wallet } = require('../../../miao-blockchain-app/src/wallet')
 const cors = require('cors');
 
 class HttpServer {

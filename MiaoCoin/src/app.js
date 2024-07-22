@@ -1,8 +1,8 @@
 const { readFileSync, fstat, pathExistsSync, mkdirSync } = require("fs-extra");
 const BlockChain = require("./blockchain/blockchain");
 const Node = require("./node/node");
-const HttpServer = require("./httpServer/httpServer");
-const { P2P } = require("./httpServer/p2p");
+const HttpServer = require("./net/httpServer");
+const { P2P } = require("./net/p2p");
 
 const httpPort = process.env.HTTP_PORT || 3000;
 const p2pPort = process.env.P2P_PORT || 4000;
