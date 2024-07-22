@@ -17,6 +17,7 @@ class HttpServer {
         this.app = express()
         // 允许所有来源（开发阶段）
         this.app.use(cors());
+
         
         this.app.use(bodyParser.json())
 
@@ -87,14 +88,14 @@ class HttpServer {
         this.app.get('/getTransactionHistory',(req,res) => {
             res.send(this.blockchain.getTransactionHistory())
         })
-        this.listen('localhost', this.port)
+        this.listen('0.0.0.0', this.port)
     }
     
     listen(host, port) {
         return new Promise((resolve, reject) => {
             this.server = this.app.listen(port, host, (err) => {
                 if (err) reject(err);
-                console.info(`Listening http on : http://localhost:${this.server.address().port}`);
+                console.info(`Listening http on : http://${host}:${port}`);
                 resolve(this);
             });
         });
