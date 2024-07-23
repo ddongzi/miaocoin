@@ -3,7 +3,6 @@ const bodyParser = require('body-parser')
 const path = require('path')
 const BlockChain = require('../blockchain/blockchain')
 const {P2P} = require('./p2p')
-const { myWallet, Wallet } = require('../../../miao-blockchain-app/src/wallet')
 const cors = require('cors');
 
 class HttpServer {
@@ -62,9 +61,10 @@ class HttpServer {
             res.send('Connected to peer')
         })
         this.app.post('/mineTransactionWithTransfer', (req,res) => {
-            const address = req.body.address;
+            const senderAddress = req.body.senderAddress;
+            const recipientAddress = req.body.recipientAddress;
             const amount = req.body.amount;
-            const resp = this.blockchain.generateNextBlockWithTransaction(address, amount);
+            const resp = this.blockchain.generateNextBlockWithTransaction(senderAddress,recipientAddress, amount);
             res.send(resp);
         })
         this.app.get('/mineTransactionWithPool', (req,res) => {
@@ -78,11 +78,12 @@ class HttpServer {
             this.node.broadcastTransactionPool()
             res.send(tx)
         })
-        this.app.get('/wallet',(req, res)=> {
+        this.app.post('/wallet',(req, res)=> {
+            const address = req.body.address;
+
             res.send( {
-                'name':myWallet.name,
-                'address':myWallet.address,
-                'balance':Wallet.getBalance(myWallet.address, this.blockchain.uTxouts)
+                'address':address,
+                'balance':this.blockchain.getBalance(address)
             })
         })
         this.app.get('/getTransactionHistory',(req,res) => {

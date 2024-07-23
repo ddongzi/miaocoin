@@ -93,7 +93,7 @@ class Transaction {
     }
 
     // 生成最初交易
-    static generateConinBaseTransaction(address,blockIndex) {
+    static generateConinBaseTransaction(minerAddress,blockIndex) {
         const t = new Transaction()
         const txIn = new TxInput();
         txIn.signature = '';
@@ -101,7 +101,7 @@ class Transaction {
         txIn.txOutIndex = blockIndex;
     
         t.inputs = [txIn];
-        t.outputs = [new TxOutput(address, COINBASE_AMOUNT)];
+        t.outputs = [new TxOutput(minerAddress, COINBASE_AMOUNT)];
         t.id = Transaction.getTransactionId(t);
         
         console.log(`Coinbase transaction created....`);

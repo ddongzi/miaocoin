@@ -16,7 +16,7 @@ RUN npm i
 COPY . .
 
 # 安装网络工具
-RUN apt-get update && apt-get install -y net-tools iproute2 iputils-ping traceroute
+# RUN apt-get update && apt-get install -y tcpdump
 
 # 暴露 HTTP 服务端口
 

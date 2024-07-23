@@ -1,15 +1,40 @@
 const BlockChain = require("../blockchain/blockchain");
+const Miner = require("../miner/miner");
 const HttpServer = require("../net/httpServer");
 const {P2P,MessageType} = require("../net/p2p");
 
 class Node {
-    constructor(blockchain) {
-        this.blockchain = blockchain;
-        this.txPool = blockchain.pool;   //
+    constructor() {
+        // 空的区块链
+        this.blockchain = new BlockChain(this)
+    }
+
+    requestSync() {
+        console.log('request sync ....')
+        this.p2p.broadcast({
+            'type': MessageType.REQUEST_SYNC_BLOCKCHAIN,
+            'description': 'timer sync',
+            'data': 'request_sync_blockchain.'
+        })
     }
     initNetwork(p2p,http) {
         this.p2p = p2p
         this.http = http
+
+        // 连接到引导节点：
+        this.p2p.connectPeer('ws://172.17.0.2:4000')
+
+
+        // 定时同步
+        this.syncTimer = function () {
+            setInterval(() => this.requestSync(), 5000)
+        }
+        this.syncTimer()
+    }
+
+    // 初始化矿工
+    initMiner() {
+        this.miner = new Miner(this)
     }
     
     broadCastTransactionPool() {

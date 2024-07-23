@@ -50,7 +50,7 @@ function Wallet() {
   const open = Boolean(anchorEl);
 
   useEffect(() => {
-    getWalletInfo()
+    getWalletInfo(address)
       .then((response) => {
         setWallet(response.data);
         setLoading(false);
@@ -161,16 +161,6 @@ function Wallet() {
               <Typography variant="h6">
                 钱包余额: {wallet.balance} BTC
               </Typography>
-              <Box mt={4}>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={handleCreateWallet}
-                  fullWidth
-                >
-                  创建新钱包
-                </Button>
-              </Box>
 
               <Box my={2}>
                 <TextField

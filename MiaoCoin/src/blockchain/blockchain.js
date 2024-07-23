@@ -7,7 +7,7 @@ const MiaoCrypto = require("../util/miaoCrypto")
 const EventEmitter = require('events');
 const  hexToBinary  = require("../util/util")
 const {BASE_PATH} = require("../config")
-const { Wallet, myWallet } = require("../../../miao-blockchain-app/src/wallet")
+const { MessageType } = require("../net/p2p")
 
 const BLOCKS_FILE = "/blocks.json";
 const Transactions_FILE = "/transactions.json"
@@ -16,22 +16,23 @@ const UTXOUTS_FILE = "/utxouts.json"
 const BLOCK_GENERATION_INTERNAL = 3 // 10 seconds
 const DIFFICULTY_ADJUSTMENT_INTERVAL = 3 // 10 blocks
 
+const DATA_PATH = '/home/dong/JSCODE/MiaoCoin/data'
 class BlockChain {
     // 每个节点都有一份区块链副本，
-    constructor(name,dataPath) {
-        this.dataPath = dataPath
-        this.name = name
+    constructor(node) {
 
-        this.transactionsDb = new DB(dataPath + Transactions_FILE)
+        this.transactionsDb = new DB(DATA_PATH + Transactions_FILE)
         this.transactions = this.transactionsDb.read(Transactions, new Transactions())
-        this.blocksDb = new DB(dataPath + BLOCKS_FILE)
+        this.blocksDb = new DB(DATA_PATH + BLOCKS_FILE)
         this.blocks = this.blocksDb.read(Blocks,new Blocks()) // 读取blocks数组
-        this.uTxoutsDb = new DB(dataPath + UTXOUTS_FILE)
+        this.uTxoutsDb = new DB(DATA_PATH + UTXOUTS_FILE)
         this.uTxouts = this.uTxoutsDb.read(null,[])
         this.pool = []
         // 事件发射
         this.emitter = new EventEmitter()
         this.init()
+
+        this.node = node
 
     }
 
@@ -47,6 +48,21 @@ class BlockChain {
         }
 
     }
+
+    // 更新Blocks，以及json
+    updateBlocks(newBlocks) {
+        console.log(`update blocks ${JSON.stringify(newBlocks)}}`)
+        this.blocks = newBlocks
+        this.blocksDb.write(this.blocks)
+    }
+
+    // 从同步数据来进行初始化
+    updateBlockchainFromSync(data) {
+        console.log(`update blockchain from sync ${JSON.stringify(data)}}`)
+        // 如果同步失败，就自己初始化
+        this.updateBlocks(data.blocks)
+    }
+
     getDifficulty() {
         const lastBlock = this.getLastBlock()
         if (lastBlock.index % DIFFICULTY_ADJUSTMENT_INTERVAL === 0 && lastBlock.index !== 0) {
@@ -64,6 +80,12 @@ class BlockChain {
             return prevAdjustedBlock.difficulty - 1;
         } else {
             return prevAdjustedBlock.difficulty;
+        }
+    }
+    // 1. 是否为空
+    isValidBlockChain() {
+        if (this.blocks.length === 0) {
+            return false
         }
     }
 
@@ -176,14 +198,14 @@ class BlockChain {
     }
 
     // 通过一笔交易生成一个块:
-    generateNextBlockWithTransaction(address, amount) {
+    generateNextBlockWithTransaction(senderAddress, receiverAdress, amount) {
         console.log(`Generating Next Block kWith Transaction.....${this.uTxouts.length}`)
         if (!Transaction.isValidAddress(address)) {
             console.error("Invalid address");
         }
-        const coinBaseTx = Transaction.generateConinBaseTransaction(myWallet.address, this.getLastBlock().index + 1)
+        const coinBaseTx = Transaction.generateConinBaseTransaction(this.node.miner.address, this.getLastBlock().index + 1)
         this.updateUnspentTxOutputs([coinBaseTx])
-        const tx = new Wallet().generateTransaction(address,amount, this.uTxouts, this.pool)
+        const tx = this.generateTransaction(address,amount, this.uTxouts, this.pool)
         this.updateUnspentTxOutputs([tx])
         const blockData = [coinBaseTx, tx];
         const newBlock = this.generateNextBlock(blockData)
@@ -191,7 +213,7 @@ class BlockChain {
     }
     // 通过未确认交易池 生成一个块
     generateNextBlockWithPool() {
-        const coinBaseTx = Transaction.generateConinBaseTransaction(myWallet.address, this.getLastBlock().index + 1)
+        const coinBaseTx = Transaction.generateConinBaseTransaction( this.getLastBlock().index + 1)
         console.log(`generateNextBlockWithPool....${JSON.stringify([coinBaseTx,this.pool])}`)
         this.updateUnspentTxOutputs([coinBaseTx].concat(this.pool))
         return this.generateNextBlock([coinBaseTx].concat(this.pool))
@@ -200,7 +222,7 @@ class BlockChain {
     // 生成一笔交易 放入池子
     generateTransactionToPool(address,amount) {
         console.log(`Generating transaction to pool, utxouts ${this.uTxouts} ,pool ${this.pool}`)
-        const tx = myWallet.generateTransaction(address,amount,this.uTxouts,this.pool);
+        const tx = generateTransaction(address,amount,this.uTxouts,this.pool);
         this.addToTransactionPool(tx)
         return tx;
     }
@@ -287,8 +309,8 @@ class BlockChain {
             .reduce((sum, amount) => sum + amount, 0);
     }
 
-    // 生成一笔交易（未确认交易：不添加到区块链）：从自己的余额中扣除amount给adress。
-    generateTransaction(receiverAdress,amount, uTxOutputs,pool) {
+    // 生成一笔交易（未确认交易：不添加到区块链）：从senderAddress的余额中扣除amount给receiverAdress。
+    generateTransactionWithoutSignature(senderAddress,receiverAdress,amount, uTxOutputs,pool) {
         // console.log(`===> ${this.publicKey} send ${amount} to ${receiverAdress}`)
         
         console.log(`generateTransaction......`)
@@ -296,7 +318,7 @@ class BlockChain {
         const tx = new Transaction()
         
         const myUTxOutputs = uTxOutputs.filter((utxout) => {
-            return utxout.address === this.address
+            return utxout.address === senderAddress
         })
         // 找到够支付的utxout
         const needUTxOutputs = []
@@ -341,6 +363,18 @@ class BlockChain {
         tx.hash = tx.toHash()
         return tx
     }
+    // 返回区块链同步信息
+    getBlockchainSyncData() {
+        console.log(`get blockchain sync data....`)
+        return {
+            'type':MessageType.RESPONSE_SYNC_BLOCKCHAIN,
+            'description':'blockchain sync data',
+            'data':{
+                'blocks':this.blocks
+            }
+        }
+    }
+
 }
 
 module.exports = BlockChain 

@@ -9,7 +9,9 @@ const apiClient = axios.create({
 
 export const getBlocks = () => apiClient.get('/blocks');
 export const getBlockDetail = (hash) => apiClient.get(`/block/${hash}`);
-export const getWalletInfo = () => apiClient.get('/wallet');
+export const getWalletInfo = (address) => apiClient.post('/wallet', {
+    address
+});
 export const transfer = (amount, address) => apiClient.post('/sendTransaction', {
     address,
     amount
