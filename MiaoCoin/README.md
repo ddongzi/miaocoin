@@ -253,6 +253,17 @@ Transaction pool is a structure that contains all of the “unconfirmed transact
 
 
 # Docker 部署
+ `` 
+```js
+# 构建镜像
+docker build -t my-blockchain-node .
 
+# 启动第一个节点
+docker run -d --name node1 -p 4001:4000 -p 3001:3000 my-blockchain-node
 
+# 启动第二个节点（映射到不同的端口）
+docker run -d --name node2 -p 4002:4000 -p 3002:3000 my-blockchain-node
 
+# 启动第三个节点（映射到不同的端口）
+docker run -d --name node3 -p 4003:4000 -p 3003:3000 my-blockchain-node
+```
