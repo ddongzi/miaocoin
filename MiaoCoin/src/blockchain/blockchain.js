@@ -205,7 +205,7 @@ class BlockChain {
         }
         const coinBaseTx = Transaction.generateConinBaseTransaction(this.node.miner.address, this.getLastBlock().index + 1)
         this.updateUnspentTxOutputs([coinBaseTx])
-        const tx = this.generateTransaction(address,amount, this.uTxouts, this.pool)
+        const tx = this.generateTxWithoutSign(senderAddress,receiverAdress,amount, this.uTxouts, this.pool)
         this.updateUnspentTxOutputs([tx])
         const blockData = [coinBaseTx, tx];
         const newBlock = this.generateNextBlock(blockData)
@@ -222,7 +222,7 @@ class BlockChain {
     // 生成一笔交易 放入池子
     generateTransactionToPool(address,amount) {
         console.log(`Generating transaction to pool, utxouts ${this.uTxouts} ,pool ${this.pool}`)
-        const tx = generateTransaction(address,amount,this.uTxouts,this.pool);
+        const tx = this.generateTxWithoutSign(senderAddress,receiverAdress,amount,this.uTxouts,this.pool);
         this.addToTransactionPool(tx)
         return tx;
     }
@@ -310,10 +310,10 @@ class BlockChain {
     }
 
     // 生成一笔交易（未确认交易：不添加到区块链）：从senderAddress的余额中扣除amount给receiverAdress。
-    generateTransactionWithoutSignature(senderAddress,receiverAdress,amount, uTxOutputs,pool) {
+    generateTxWithoutSign(senderAddress,receiverAdress,amount, uTxOutputs,pool) {
         // console.log(`===> ${this.publicKey} send ${amount} to ${receiverAdress}`)
         
-        console.log(`generateTransaction......`)
+        console.log(`generateTransactionWithoutSignature......`)
         
         const tx = new Transaction()
         

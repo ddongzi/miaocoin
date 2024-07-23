@@ -28,6 +28,7 @@ import {
   createWallet,
   importWallet,
 } from "../apiService";
+import MyCrypto from "../myCrypto";
 
 function Wallet() {
   const [wallet, setWallet] = useState(null);
@@ -58,13 +59,11 @@ function Wallet() {
       .catch(() => setLoading(false));
   }, []);
 
-  const handleCreateWallet = () => {
-    createWallet()
-      .then((response) => {
-        setWallet(response.data);
-        setSuccessMessage("钱包创建成功！");
-      })
-      .catch(() => setErrorMessage("钱包创建失败。请重试。"));
+  const handleCreateWallet = async () => {
+    const { privateKey, publicKey } = await MyCrypto.generateKeyPair();
+    wallet.privateKey = privateKey;
+    wallet.publicKey = publicKey;
+    console.log(`创建新钱包 ${privateKey}, ${publicKey}`);
   };
 
   const handleImportWallet = () => {
@@ -76,6 +75,13 @@ function Wallet() {
       .catch(() => setErrorMessage("钱包导入失败。请检查密钥并重试。"));
   };
 
+
+  const signTx = (tx) => {
+    tx.inputs = tx.inputs.map((txin, index) => {
+      txin.signature = MyCrypto.sign(tx.id,MyCrypto.pemToHex(wallet.privateKey))
+      return txin;
+    });
+  };
   const handleTransfer = () => {
     if (!amount || !address) {
       setErrorMessage("请填写所有字段。");
@@ -83,10 +89,11 @@ function Wallet() {
     }
 
     setTransferLoading(true);
-    transfer(amount, address)
+    transfer(wallet.address, address, amount)
       .then((response) => {
         setSuccessMessage("转账成功！");
-        setTransactionId(response.data.transactionId); // 假设 API 返回交易ID
+        signTx(JSON.parse(response.data))
+        setTransactionId(response.data.id); // 假设 API 返回交易ID
         setAmount("");
         setAddress("");
         setTransferLoading(false);
@@ -222,7 +229,7 @@ function Wallet() {
         <MenuItem onClick={handleCreateWallet}>创建新钱包</MenuItem>
         <MenuItem onClick={() => setOpenImportDialog(true)}>导入钱包</MenuItem>
       </Menu>
-      
+
       <Dialog open={openImportDialog} onClose={handleCloseImportDialog}>
         <DialogTitle>导入钱包</DialogTitle>
         <DialogContent>

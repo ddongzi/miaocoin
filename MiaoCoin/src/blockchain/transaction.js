@@ -58,8 +58,6 @@ class Transaction {
     }
 
 
-    
-
     // 交易有效性验证
     isValidTransactionStructure(transaction) {
         if (typeof transaction.id !== 'string') {
