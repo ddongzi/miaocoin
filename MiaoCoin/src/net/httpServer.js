@@ -4,6 +4,7 @@ const path = require('path')
 const BlockChain = require('../blockchain/blockchain')
 const {P2P} = require('./p2p')
 const cors = require('cors');
+const { Transaction } = require('../blockchain/transaction')
 
 class HttpServer {
     constructor(port,node) {
@@ -71,12 +72,16 @@ class HttpServer {
             const resp = this.blockchain.generateNextBlockWithPool();
             res.send(resp);
         })
-        this.app.post('/sendTransaction',(req,res) => {
-            const address = req.body.address;
+        this.app.post('/createTransaction',(req,res) => {
+            const sender = req.body.sender;
+            const receiver = req.body.receiver;
             const amount = req.body.amount;
-            const tx = this.blockchain.generateTransactionToPool(address,amount);
-            this.node.broadcastTransactionPool()
+            const tx = this.blockchain.generateTxWithoutSign(sender,receiver,amount);
             res.send(tx)
+        })
+        this.app.post('/addSignedTransaction', (req, res) => {
+            const tx = req.body.tx
+            this.blockchain.updateTXhash(Transaction.fromJson(tx))
         })
         this.app.post('/wallet',(req, res)=> {
             const address = req.body.address;

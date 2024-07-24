@@ -12,7 +12,7 @@ export const getBlockDetail = (hash) => apiClient.get(`/block/${hash}`);
 export const getWalletInfo = (address) => apiClient.post('/wallet', {
     address
 });
-export const transfer = (sender, receiver,amount ) => apiClient.post('/sendTransaction', {
+export const transfer = (sender, receiver,amount ) => apiClient.post('/createTransaction', {
     sender,
     receiver,
     amount

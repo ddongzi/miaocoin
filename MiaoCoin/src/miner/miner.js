@@ -1,4 +1,4 @@
-const { pathExists, readFileSync, writeFileSync } = require("fs-extra")
+const { pathExists, readFileSync, writeFileSync, existsSync } = require("fs-extra")
 const MiaoCrypto = require("../util/miaoCrypto")
 
 // 每个节点上都有矿工角色。  负责签名产生区块
@@ -15,20 +15,26 @@ class Miner {
     }
     init() {
         this.loadKeys()
-        this.timer = setInterval(() => this.mine(), 1000 * 60 * 10)
+        this.timer = setInterval(() => this.mine(), 1000 * 60 * 1)
+    }
+    // 主动定时1分支去请求产生区块
+    mine() {
+        console.log(`Miner is mining...`)
+        this.node.blockchain.generateNextBlockWithMine()
     }
     // 初始化加载 矿工密钥
     loadKeys(){
         // 读取私钥和公钥
         const privateKeyPath = DATA_PATH + PRIVATE_KEY_FILE
         const publicKeyPath = DATA_PATH + PUBLIC_KEY_FILE
-        if (!pathExists(publicKeyPath) || !pathExists(privateKeyPath)) {
+        if (!existsSync(publicKeyPath) || !existsSync(privateKeyPath)) {
             const {privateKey, publicKey}  = MiaoCrypto.generateKeyPair()
             writeFileSync(publicKeyPath,publicKey)
             writeFileSync(privateKeyPath,privateKey)
         }
-        this.privateKey = readFileSync(privateKeyPath, 'utf8')
-        this.publicKey = readFileSync(publicKeyPath, 'utf8')
+        this.privateKey = MiaoCrypto.pemToHex(readFileSync(privateKeyPath, 'utf8'))
+        this.publicKey = MiaoCrypto.pemToHex(readFileSync(publicKeyPath, 'utf8'))
+        console.log(`Miner loaded keys: ${this.publicKey}`)
     }
 }
 

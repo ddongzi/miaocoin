@@ -46,6 +46,7 @@ class MyCrypto {
 
     static async importPrivateKey(pem) {
         const keyBuffer = MyCrypto.pemToBuffer(pem);
+        console.log(`key buffer: ${keyBuffer}`)
         return await crypto.subtle.importKey(
             'pkcs8',
             keyBuffer,
@@ -53,7 +54,7 @@ class MyCrypto {
                 name: 'ECDSA',
                 namedCurve: 'P-256'
             },
-            false,
+            true,
             ['sign']
         );
     }
@@ -64,12 +65,10 @@ class MyCrypto {
     }
 
     static pemToBuffer(pem) {
-        const pemHeader = "-----BEGIN ";
-        const pemFooter = "-----END ";
-        const pemContents = pem.substring(pem.indexOf(pemHeader) + pemHeader.length);
-        const endIndex = pemContents.indexOf(pemFooter);
-        const base64 = pemContents.substring(0, endIndex).replace(/\s/g, '');
-        return Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+        const stripped = pem.replace(/-----BEGIN .*-----/, '').replace(/-----END .*-----/, '').replace(/\s/g, '');
+        // 将 Base64 编码的内容解码为 Buffer
+        console.log(`Base64 ${stripped}`)
+        return Uint8Array.from(atob(stripped), c => c.charCodeAt(0));
     }
 
     static bufferToHex(buffer) {
@@ -106,4 +105,5 @@ class MyCrypto {
     const hex = MyCrypto.pemToHex(privateKey);
     console.log('PEM to Hex:', hex);
 })();
-export default MyCrypto
+
+export default MyCrypto;

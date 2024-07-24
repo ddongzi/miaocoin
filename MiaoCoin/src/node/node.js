@@ -25,9 +25,9 @@ class Node {
         this.p2p.connectPeer('ws://172.17.0.2:4000')
 
 
-        // 定时同步
+        // 定时3分钟同步一次
         this.syncTimer = function () {
-            setInterval(() => this.requestSync(), 5000)
+            setInterval(() => this.requestSync(), 1000 * 60 *3)
         }
         this.syncTimer()
     }

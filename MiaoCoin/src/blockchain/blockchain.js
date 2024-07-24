@@ -13,7 +13,7 @@ const BLOCKS_FILE = "/blocks.json";
 const Transactions_FILE = "/transactions.json"
 const UTXOUTS_FILE = "/utxouts.json"
 
-const BLOCK_GENERATION_INTERNAL = 3 // 10 seconds
+const BLOCK_GENERATION_INTERNAL = 30 // 10 seconds
 const DIFFICULTY_ADJUSTMENT_INTERVAL = 3 // 10 blocks
 
 const DATA_PATH = '/home/dong/JSCODE/MiaoCoin/data'
@@ -34,6 +34,8 @@ class BlockChain {
 
         this.node = node
 
+        // 未签名的交易，等待客户签名了将其转化未 未确认的交易 （放入池中）
+        this.unsignedTx = []
     }
 
     // 初始节点使用
@@ -47,6 +49,12 @@ class BlockChain {
             this.blocksDb.write(this.blocks)
         }
 
+    }
+
+    // 完善TX hash
+    updateTXhash(tx) {
+        tx.hash = tx.toHash()
+        this.pool.push(tx)
     }
 
     // 更新Blocks，以及json
@@ -104,11 +112,13 @@ class BlockChain {
             }
             nouce++
         }
+
         const newBlock = new Block(nextIndex, nextTimestamp, difficulty, nouce, data, previousBlock.hash, hash)
         this.addBlock(newBlock)
         return newBlock
         
     }
+    // 链上创世区块
     createGeniusBlock() {
         let index = 0
         let timestamp = new Date().toUTCString()
@@ -310,14 +320,14 @@ class BlockChain {
     }
 
     // 生成一笔交易（未确认交易：不添加到区块链）：从senderAddress的余额中扣除amount给receiverAdress。
-    generateTxWithoutSign(senderAddress,receiverAdress,amount, uTxOutputs,pool) {
+    generateTxWithoutSign(senderAddress,receiverAdress,amount) {
         // console.log(`===> ${this.publicKey} send ${amount} to ${receiverAdress}`)
         
         console.log(`generateTransactionWithoutSignature......`)
         
         const tx = new Transaction()
         
-        const myUTxOutputs = uTxOutputs.filter((utxout) => {
+        const myUTxOutputs = this.uTxouts.filter((utxout) => {
             return utxout.address === senderAddress
         })
         // 找到够支付的utxout
@@ -353,14 +363,9 @@ class BlockChain {
 
         }
         //console.log(`输出,  ${JSON.stringify(txOutputs)}`)
+        tx.outputs = txOutputs
         tx.id = Transaction.getTransactionId(tx)
         tx.inputs = txInputs
-        tx.inputs = txInputs.map((txin,index) => {
-            tx.signatureTXInputs(this.privateKey,index)
-            return txin
-        })
-        tx.outputs = txOutputs
-        tx.hash = tx.toHash()
         return tx
     }
     // 返回区块链同步信息
@@ -373,6 +378,12 @@ class BlockChain {
                 'blocks':this.blocks
             }
         }
+    }
+    // 通过挖矿产生
+    generateNextBlockWithMine() {
+        const coinBaseTx = Transaction.generateConinBaseTransaction(this.node.miner.address, this.getLastBlock().index + 1)
+        this.generateNextBlock([coinBaseTx])
+        this.updateUnspentTxOutputs([coinBaseTx])
     }
 
 }

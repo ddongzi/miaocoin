@@ -51,13 +51,15 @@ function Wallet() {
   const open = Boolean(anchorEl);
 
   useEffect(() => {
-    getWalletInfo(address)
+    getWalletInfo()
       .then((response) => {
         setWallet(response.data);
         setLoading(false);
       })
       .catch(() => setLoading(false));
   }, []);
+
+  
 
   const handleCreateWallet = async () => {
     const { privateKey, publicKey } = await MyCrypto.generateKeyPair();
@@ -67,12 +69,21 @@ function Wallet() {
   };
 
   const handleImportWallet = () => {
-    importWallet(importPublicKey, importPrivateKey)
-      .then((response) => {
-        setWallet(response.data);
-        setSuccessMessage("钱包导入成功！");
-      })
-      .catch(() => setErrorMessage("钱包导入失败。请检查密钥并重试。"));
+    wallet.privateKey = importPrivateKey;
+    wallet.publicKey = importPublicKey;
+    console.log(`导入已有钱包 ${importPrivateKey}, ${importPublicKey}`);
+    handleCloseImportDialog()
+
+    console.log(`import ${MyCrypto.pemToHex(importPublicKey)} , ${importPublicKey}`);
+
+    
+
+    getWalletInfo(importPublicKey)
+    .then((response) => {
+      setWallet(response.data);
+      setLoading(false);
+    })
+    .catch(() => setLoading(false));
   };
 
 

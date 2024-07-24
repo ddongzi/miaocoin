@@ -102,7 +102,7 @@ class Transaction {
         t.outputs = [new TxOutput(minerAddress, COINBASE_AMOUNT)];
         t.id = Transaction.getTransactionId(t);
         
-        console.log(`Coinbase transaction created....`);
+        console.log(`Coinbase transaction created.... ${t}`);
 
         return t;
     }
