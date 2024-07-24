@@ -8,6 +8,7 @@ const EventEmitter = require('events');
 const  hexToBinary  = require("../util/util")
 const {BASE_PATH} = require("../config")
 const { MessageType } = require("../net/p2p")
+const SyncMessage = require("../net/syncMessage")
 
 const BLOCKS_FILE = "/blocks.json";
 const Transactions_FILE = "/transactions.json"
@@ -59,16 +60,22 @@ class BlockChain {
 
     // 更新Blocks，以及json
     updateBlocks(newBlocks) {
-        console.log(`update blocks ${JSON.stringify(newBlocks)}}`)
+        if (MiaoCrypto.hash(JSON.stringify(newBlocks)) === MiaoCrypto.hash(JSON.stringify(this.blocks))) {
+            console.log(`no need to update.`)
+            return 
+        }
+        console.log(`update blocks ...`)
         this.blocks = newBlocks
         this.blocksDb.write(this.blocks)
     }
 
-    // 从同步数据来进行初始化
+    // 从同步数据来更新
+    // data为json str格式
     updateBlockchainFromSync(data) {
-        console.log(`update blockchain from sync ${JSON.stringify(data)}}`)
+        console.log(`update blockchain from sync ${data}`)
         // 如果同步失败，就自己初始化
-        this.updateBlocks(data.blocks)
+        const syncMsg = SyncMessage.deserialize(data)
+        this.updateBlocks(syncMsg.blocks)
     }
 
     getDifficulty() {

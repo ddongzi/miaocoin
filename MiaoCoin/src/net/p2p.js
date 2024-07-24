@@ -60,7 +60,7 @@ class P2P {
         socket.on('message', (data) => {
 
             const message = JSON.parse(data);
-            console.log(`Received message :  ${JSON.stringify(message)}`);
+            console.log(`Received requst message :  ${JSON.stringify(message)}`);
 
             switch (message.type) {
                 case MessageType.QUERY_LATEST:
@@ -111,14 +111,14 @@ class P2P {
     initResponseMessageHandler(socket) {
         socket.on('message', (data) => {
             const message = JSON.parse(data);
-            console.log(`Received message from ${socket.url} :  ${JSON.stringify(message)}`);
+            console.log(`Received response message from ${socket.url} :  ${JSON.stringify(data)}`);
 
             switch (message.type) {
                 case MessageType.RESPONSE_BLOCKCHAIN:
                     this.node.receiveNewBlock(message.data)
                     break;
                 case MessageType.RESPONSE_SYNC_BLOCKCHAIN:
-                    this.node.blockchain.updateBlockchainFromSync(message.data)
+                    this.node.blockchain.updateBlockchainFromSync(JSON.stringify(message.data))
                     break;
             }
         });
