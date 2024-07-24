@@ -3,6 +3,7 @@
     "cors": "^2.8.5",
     "express": "^4.19.2",
     "fs-extra": "^11.2.0",
+    "ip": "^2.0.1",
     "pug": "^3.0.3",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",

@@ -1,5 +1,6 @@
 const { pathExists, readFileSync, writeFileSync, existsSync } = require("fs-extra")
 const MiaoCrypto = require("../util/miaoCrypto")
+const { MessageType } = require("../net/p2p")
 
 // 每个节点上都有矿工角色。  负责签名产生区块
 const DATA_PATH = '/home/dong/JSCODE/MiaoCoin/data/miner'
@@ -20,7 +21,14 @@ class Miner {
     // 主动定时1分支去请求产生区块
     mine() {
         console.log(`Miner is mining...`)
-        this.node.blockchain.generateNextBlockWithMine()
+        const newBlock = this.node.blockchain.generateNextBlockWithMine()
+        console.log(`Miner done.`)
+        // 广播
+        this.node.p2p.broadcast({
+            'type': MessageType.NEW_BLOCK,
+            'description': 'new block',
+            'data': newBlock
+        })
     }
     // 初始化加载 矿工密钥
     loadKeys(){

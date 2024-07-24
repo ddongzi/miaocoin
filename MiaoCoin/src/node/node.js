@@ -2,6 +2,7 @@ const BlockChain = require("../blockchain/blockchain");
 const Miner = require("../miner/miner");
 const HttpServer = require("../net/httpServer");
 const {P2P,MessageType} = require("../net/p2p");
+const { getLocalIP } = require("../util/netUtil");
 
 class Node {
     constructor() {
@@ -13,22 +14,20 @@ class Node {
         console.log('request sync ....')
         this.p2p.broadcast({
             'type': MessageType.REQUEST_SYNC_BLOCKCHAIN,
-            'description': 'timer sync',
-            'data': 'request_sync_blockchain.'
+            'description': 'request_sync_blockchain',
+            'data': {
+                'wsurl': this.p2p.wsurl // 发送自己服务地址
+            }
         })
     }
     initNetwork(p2p,http) {
         this.p2p = p2p
         this.http = http
 
-        // 连接到引导节点：
-        this.p2p.connectPeer('ws://172.17.0.2:4000')
-
-
         // 定时3分钟同步一次
         this.syncTimer = function () {
             console.log('sync timer triggered...')
-            setInterval(() => this.requestSync(), 1000 * 60 *1)
+            setInterval(() => this.requestSync(), 5000 *1)
         }
         this.syncTimer()
     }
