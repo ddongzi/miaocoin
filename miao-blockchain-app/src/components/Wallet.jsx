@@ -19,6 +19,7 @@ import {
   ListItemText,
   Menu,
   MenuItem,
+  Input,
 } from "@mui/material";
 import { CopyAll, MoreVert } from "@mui/icons-material";
 import {
@@ -29,12 +30,10 @@ import {
   importWallet,
 } from "../apiService";
 import MyCrypto from "../myCrypto";
+import useLocalStorage from "../hooks/useLocalStorage";
 
 function Wallet() {
-  const [wallet, setWallet] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [amount, setAmount] = useState("");
-  const [address, setAddress] = useState("");
+  const [loading, setLoading] = useState(false);
   const [transferLoading, setTransferLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -42,45 +41,83 @@ function Wallet() {
   const [transactionId, setTransactionId] = useState("");
   const [openKeyDialog, setOpenKeyDialog] = useState(false);
   const [openHistoryDialog, setOpenHistoryDialog] = useState(false);
-  const [transactionHistory, setTransactionHistory] = useState([]);
   const [anchorEl, setAnchorEl] = useState(null);
-  const [importPublicKey, setImportPublicKey] = useState("");
-  const [importPrivateKey, setImportPrivateKey] = useState("");
   const [openImportDialog, setOpenImportDialog] = useState(false);
+
+
+  const [address, setAddress] = useLocalStorage('address','');
+  const [publicKey, setPublicKey] = useLocalStorage('publickKey','')
+  const [privateKey, setPrivateKey] = useLocalStorage('privatekKey','')
+  const [balance, setBalance] = useLocalStorage('balance',0)
+
+  const [importPublicKey, setImportPublicKey] = useState('');
+  const [importPrivateKey, setImportPrivateKey] = useState('');
+  
+  const [amount, setAmount] = useState(0);
+  const [receiver, setReceiver] = useState('')
+  const [transactionHistory, setTransactionHistory] = useState([]);
+
 
   const open = Boolean(anchorEl);
 
   useEffect(() => {
-    getWalletInfo()
-      .then((response) => {
-        setWallet(response.data);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+    if (address.length > 0) {
+      getWalletInfo(address)
+       .then((response) => {
+          setBalance(response.data.balance)
+          setLoading(false);
+        })
+       .catch(() => setLoading(false));
+    } else {
+      console.log(`empty wallet ${balance}`);
+    }
+
   }, []);
 
   
 
   const handleCreateWallet = async () => {
     const { privateKey, publicKey } = await MyCrypto.generateKeyPair();
-    wallet.privateKey = privateKey;
-    wallet.publicKey = publicKey;
+    setPublicKey(importPublicKey)
+    setAddress(MyCrypto.pemToHex(importPublicKey));
+    setPrivateKey(importPrivateKey)
     console.log(`创建新钱包 ${privateKey}, ${publicKey}`);
   };
+  const handlePublicKeyUpload = (event) => {
+    const file = event.target.files[0];
+    const reader = new FileReader();
 
+    reader.onload = (e) => {
+      const publicKey = e.target.result;
+      setImportPublicKey(publicKey);
+    };
+
+    reader.readAsText(file);
+  };
+
+  const handlePrivateKeyUpload = (event) => {
+    const file = event.target.files[0];
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      const privateKey = e.target.result;
+      setImportPrivateKey(privateKey);
+    };
+
+    reader.readAsText(file);
+  };
   const handleImportWallet = () => {
-    wallet.privateKey = importPrivateKey;
-    wallet.publicKey = importPublicKey;
-    console.log(`导入已有钱包 ${importPrivateKey}, ${importPublicKey}`);
+    setPublicKey(importPublicKey)
+    setAddress(MyCrypto.pemToHex(importPublicKey))
+    setPrivateKey(importPrivateKey)
+
+    console.log(`导入钱包\n${importPublicKey}\n${privateKey}`);
     handleCloseImportDialog()
 
-    console.log(`import ${MyCrypto.pemToHex(importPublicKey)} , ${importPublicKey}`);
-
-    
-
-    getWalletInfo(importPublicKey)
+    // {'addresses': '' , 'balance': number}
+    getWalletInfo(address)
     .then((response) => {
-      setWallet(response.data);
+      setBalance(response.data.balance)
       setLoading(false);
     })
     .catch(() => setLoading(false));
@@ -89,7 +126,7 @@ function Wallet() {
 
   const signTx = (tx) => {
     tx.inputs = tx.inputs.map((txin, index) => {
-      txin.signature = MyCrypto.sign(tx.id,MyCrypto.pemToHex(wallet.privateKey))
+      txin.signature = MyCrypto.sign(tx.id,MyCrypto.pemToHex(privateKey))
       return txin;
     });
   };
@@ -100,7 +137,7 @@ function Wallet() {
     }
 
     setTransferLoading(true);
-    transfer(wallet.address, address, amount)
+    transfer(address, receiver, amount)
       .then((response) => {
         setSuccessMessage("转账成功！");
         signTx(JSON.parse(response.data))
@@ -174,10 +211,9 @@ function Wallet() {
               <MoreVert />
             </IconButton>
           </Box>
-          {wallet ? (
             <div>
               <Typography variant="h6">
-                钱包余额: {wallet.balance} BTC
+                钱包余额: {balance} coin
               </Typography>
 
               <Box my={2}>
@@ -191,7 +227,7 @@ function Wallet() {
                 />
                 <TextField
                   label="收款地址"
-                  value={address}
+                  value={receiver}
                   onChange={(e) => setAddress(e.target.value)}
                   fullWidth
                   margin="normal"
@@ -226,9 +262,7 @@ function Wallet() {
                 )}
               </Box>
             </div>
-          ) : (
-            <Typography>钱包信息不可用。</Typography>
-          )}
+
         </CardContent>
       </Card>
       <Menu
@@ -244,12 +278,26 @@ function Wallet() {
       <Dialog open={openImportDialog} onClose={handleCloseImportDialog}>
         <DialogTitle>导入钱包</DialogTitle>
         <DialogContent>
+          <Input
+            type="file"
+            onChange={handlePublicKeyUpload}
+            fullWidth
+            margin="normal"
+            inputProps={{ accept: '.pem' }}
+          />
           <TextField
             label="公钥"
             value={importPublicKey}
             onChange={(e) => setImportPublicKey(e.target.value)}
             fullWidth
             margin="normal"
+          />
+          <Input
+            type="file"
+            onChange={handlePrivateKeyUpload}
+            fullWidth
+            margin="normal"
+            inputProps={{ accept: '.pem' }}
           />
           <TextField
             label="私钥"
@@ -281,10 +329,10 @@ function Wallet() {
                 color="textSecondary"
                 style={{ flexGrow: 1 }}
               >
-                {wallet?.publicKey}
+                {publicKey}
               </Typography>
               <IconButton
-                onClick={() => handleCopy(wallet?.publicKey)}
+                onClick={() => handleCopy(publicKey)}
                 color="primary"
               >
                 <CopyAll />
@@ -299,10 +347,10 @@ function Wallet() {
                 color="textSecondary"
                 style={{ flexGrow: 1 }}
               >
-                {wallet?.privateKey}
+                {privateKey}
               </Typography>
               <IconButton
-                onClick={() => handleCopy(wallet?.privateKey)}
+                onClick={() => handleCopy(privateKey)}
                 color="primary"
               >
                 <CopyAll />
