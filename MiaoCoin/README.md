@@ -152,6 +152,7 @@ Utxouts 更新
 3. 新区快广播到各节点验证，
 4. 超过51%节点验证成功后，上链
 
+TX状态变化： 钱包发起交易--> 节点上返回未签名的交易--> 钱包签名后发回---> 节点做hash，转化为未确认的交易
 
 # 共识机制（工作量证明）：
 用户发起交易后，网络所有节点都会收到请求，但并不是所有节点都有能力记录交易。如POW工作量证明（挖矿），产生公认唯一的节点来记录。
@@ -253,6 +254,17 @@ Transaction pool is a structure that contains all of the “unconfirmed transact
 
 
 # Docker 部署
+ `` 
+```js
+# 构建镜像
+docker build -t my-blockchain-node .
 
+# 启动第一个节点
+docker run -d --name node1 -p 4001:4000 -p 3001:3000 my-blockchain-node
 
+# 启动第二个节点（映射到不同的端口）
+docker run -d --name node2 -p 4002:4000 -p 3002:3000 my-blockchain-node
 
+# 启动第三个节点（映射到不同的端口）
+docker run -d --name node3 -p 4003:4000 -p 3003:3000 my-blockchain-node
+```
