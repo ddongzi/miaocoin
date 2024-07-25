@@ -14,7 +14,7 @@
 每个node维持区块链的副本。区块链数据包括：blocks, transactions, utxouts, transaction pool(未确认交易池）
 - blocks : json存储
 - transactions: 属于blocks, 单独json存储
-- utxouts : json存储
+- utxouts : json存储 ❓ 为啥，不应该可以从blocks也提取出来吗
 - transaction pool : 存储在内存中，不持久化
 
 ### 1.1 定义区块结构
