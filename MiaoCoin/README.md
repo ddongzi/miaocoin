@@ -47,21 +47,6 @@
 - blocksDb 区块链数据,  路径data/{name}/blocks.json
 a. 创建区块链
 - 从创世区块构建： 创世区块生成
-```js
-class BlockChain {
-    constructor() {
-        this.chain = [this.createGeniusBlock()]
-    }
-    createGeniusBlock() {
-        return new Block(
-            0,
-            new Date().toISOString(),
-            'Genius Block',
-            '0'
-        )
-    }   
-}
-```
 - 从文件读取：
  文件读取工具
  read: 从json文件读取一个区块链数据，并转换为blockchain对象
@@ -93,48 +78,13 @@ class DB {
 blocks为数据，[block] 
 
 3. Transaction类
-```json
-{
-    "id": "5a78ebcfdc71796f7e7e29a31b63e61b0c08c32a944e56db2b59fa971b7aa10f",
-    "timestamp": 1632765429,
-    "inputs": [
-        {
-            "transaction": "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6",
-            "index": 0,
-            "address": "sender_address_1",
-            "signature": "sender_signature_1"
-        },
-        {
-            "transaction": "b2c3d4e5f6g7h8i9j0k1l2m3n4o5p7q8",
-            "index": 1,
-            "address": "sender_address_2",
-            "signature": "sender_signature_2"
-        }
-    ],
-    "outputs": [
-        {
-            "amount": 50,
-            "address": "recipient_address_1"
-        },
-        {
-            "amount": 20,
-            "address": "recipient_address_2"
-        }
-    ]
-}
-```
++ Transaction
++ + id
+  + hash
+  + inputs
+  + outputs
+inputs : 包含交易发起者的多项资金来源。
 
-
-
-
-```javascript
-    addBlock(newBlock) {
-        newBlock.previoushash = this.getLastBlock().toHash()
-        this.blocks.push(newBlock)
-        this.blocksDb.write(this.blocks)
-        console.info(`Block added ${newBlock}`)
-    }
-```
 
 
 Utxouts 更新
