@@ -16,7 +16,7 @@ class Miner {
     }
     init() {
         this.loadKeys()
-        this.timer = setInterval(() => this.mine(), 1000 * 60 * 1)
+        this.timer = setInterval(() => this.mine(), 1000 * 60 * 3)
     }
     // 主动定时1分支去请求产生区块
     mine() {

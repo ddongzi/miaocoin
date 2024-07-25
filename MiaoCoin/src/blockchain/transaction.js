@@ -41,9 +41,9 @@ class Transaction {
         const outputContent = transaction.outputs.map((t) =>t.address + t.amount)
             .reduce((a,b) => a+b,'')
 
-        console.log("Input Content:", inputContent);
-        console.log("Output Content:", outputContent);
-        console.log("Concatenated Content:", inputContent + outputContent);
+        // console.log("Input Content:", inputContent);
+        // console.log("Output Content:", outputContent);
+        // console.log("Concatenated Content:", inputContent + outputContent);
         return MiaoCrypto.hash(inputContent + outputContent)
     }
     

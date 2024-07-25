@@ -39,6 +39,8 @@ function NodeOperations() {
   const handleNodeSelection = (node) => {
     setSelectedNode(node);
     setNodeUrl(node.url);
+    setNodeDetails(null)
+    
     getNodeDetails()
       .then((data) => setNodeDetails(data.data))
       .catch(() => setErrorMessage("无法获取节点详细信息。"));

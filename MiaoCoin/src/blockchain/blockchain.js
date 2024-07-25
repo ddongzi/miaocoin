@@ -17,7 +17,7 @@ const UTXOUTS_FILE = "/utxouts.json";
 const BLOCK_GENERATION_INTERNAL = 30; // 10 seconds
 const DIFFICULTY_ADJUSTMENT_INTERVAL = 3; // 10 blocks
 
-const DATA_PATH = "/home/dong/JSCODE/MiaoCoin/data";
+const DATA_PATH = "/home/dong/JSCODE/MiaoCoin/data/blockchain";
 class BlockChain {
   // 每个节点都有一份区块链副本，
   constructor(node) {
@@ -59,18 +59,36 @@ class BlockChain {
     this.pool.push(tx);
   }
 
-  // 更新Blocks，以及json
+  // 更新Blocks，以及json.  返回是否更新了
   updateBlocks(newBlocks) {
+    // 1. hash 相同， 不需要更新
     if (
       MiaoCrypto.hash(JSON.stringify(newBlocks)) ===
       MiaoCrypto.hash(JSON.stringify(this.blocks))
     ) {
       console.log(`no need to update.`);
-      return;
+      return false;
+    }
+    // 2. 最长链原则判断是否更新
+    if (newBlocks.length < this.blocks.length) {
+      return false;
     }
     console.log(`update blocks ...`);
     this.blocks = newBlocks;
     this.blocksDb.write(this.blocks);
+    return true;
+  }
+
+  // 从同步数据utxouts更新
+  updateUTXouts(utxOuts) {
+    console.log(`update utxouts ...`);
+    if (MiaoCrypto.hash(JSON.stringify(utxOuts)) === MiaoCrypto.hash(JSON.stringify(this.uTxouts))) {
+      console.log(`no need to update.`);
+      return;
+    }
+
+    this.uTxouts = utxOuts;
+    this.uTxoutsDb.write(this.uTxouts);
   }
 
   // 从同步数据来更新
@@ -79,8 +97,14 @@ class BlockChain {
     console.log(`update blockchain from sync ${data}`);
     // 如果同步失败，就自己初始化
     const syncMsg = SyncMessage.deserialize(data);
-    this.updateBlocks(syncMsg.blocks);
-    this.node.p2p.updatePeers(syncMsg.peers)
+
+    // 同步逻辑。 最长链原则，
+    const needUpdate = this.updateBlocks(syncMsg.blocks);
+    if (needUpdate) { 
+      // 与块上数据保持一致
+      this.updateUTXouts(syncMsg.utxouts);
+    }
+    this.node.p2p.updatePeers(syncMsg.peers);
   }
 
   getDifficulty() {
@@ -208,12 +232,13 @@ class BlockChain {
   }
   // 将一个block加入链
   addBlock(newBlock) {
-    // console.log(`add block ${newBlock.index}`)
+    console.log(`add block ${newBlock.index}`)
     if (this.checkBlock(newBlock, this.getLastBlock())) {
       // console.log(`adding block ${JSON.stringify(newBlock)}`)
 
       this.blocks.push(newBlock);
       this.blocksDb.write(this.blocks);
+
       console.info(`Blockchain  added Block#${newBlock.index}`);
     }
   }
@@ -221,7 +246,7 @@ class BlockChain {
   checkBlock(newBlock, previousBlock) {
     if (!previousBlock) {
       // 前面区块不存在：说明 链相差至少2个块，放弃此次添加，等待同步
-      console.error(`Check block failed: previous block not exist`)
+      console.error(`Check block failed: previous block not exist`);
       return false;
     }
 
@@ -235,14 +260,16 @@ class BlockChain {
     }
     if (previousBlock.toHash() !== newBlock.previoushash) {
       console.error(
-        `Invalid previous hash, expected:${previousBlock.toHash()} ,got: ${newBlock.previoushash},`
+        `Invalid previous hash, expected:${previousBlock.toHash()} ,got: ${
+          newBlock.previoushash
+        },`
       );
       return false;
     }
     if (newBlock.toHash() !== newBlock.hash) {
       return false;
     }
-    console.log(`check block succeeded.`)
+    console.log(`check block succeeded.`);
     return true;
   }
 
@@ -283,7 +310,8 @@ class BlockChain {
       this.node.miner.address,
       this.getLastBlock().index + 1
     );
-    this.updateUnspentTxOutputs([coinBaseTx]);
+
+    this.updateUTxOutsFromTxs([coinBaseTx]);
     const tx = this.generateTxWithoutSign(
       senderAddress,
       receiverAdress,
@@ -291,7 +319,7 @@ class BlockChain {
       this.uTxouts,
       this.pool
     );
-    this.updateUnspentTxOutputs([tx]);
+    this.updateUTxOutsFromTxs([tx]);
     const blockData = [coinBaseTx, tx];
     const newBlock = this.generateNextBlock(blockData);
     return newBlock;
@@ -304,7 +332,7 @@ class BlockChain {
     console.log(
       `generateNextBlockWithPool....${JSON.stringify([coinBaseTx, this.pool])}`
     );
-    this.updateUnspentTxOutputs([coinBaseTx].concat(this.pool));
+    this.updateUTxOutsFromTxs([coinBaseTx].concat(this.pool));
     return this.generateNextBlock([coinBaseTx].concat(this.pool));
   }
 
@@ -325,8 +353,8 @@ class BlockChain {
   }
 
   // 新的交易来更新 utxOuts
-  updateUnspentTxOutputs(transactions) {
-    console.log(`updateUnspentTxOutputs ... `);
+  updateUTxOutsFromTxs(transactions) {
+    console.log(`update utxouts from txs ... `);
     const newUnspentTxOutputs = transactions
       .map((t) => {
         return t.outputs.map(
@@ -340,17 +368,27 @@ class BlockChain {
       .reduce((a, b) => a.concat(b), [])
       .map((txin) => new UTxOutput(txin.txOutId, txin.txOutIndex, "", 0));
 
-    const resultingUnspentTxOuts = this.uTxouts
-      .filter((utxout) => {
+    var resultingUnspentTxOuts = this.uTxouts
+      .filter((utxout) => 
         !consumedTxOutputs.find(
           (t) =>
             t.txOutId === utxout.txOutId && t.txOutIndex === utxout.txOutIndex
-        );
-      })
-      .concat(newUnspentTxOutputs);
+        )
+      
+    );
+    console.log(`After filter: ${JSON.stringify(resultingUnspentTxOuts)}`);
+    resultingUnspentTxOuts = resultingUnspentTxOuts.concat(newUnspentTxOutputs);
 
-    // console.log(`newUnspentTxOutputs: ${JSON.stringify(newUnspentTxOutputs)}\n consumedTxOutputs: ${JSON.stringify(consumedTxOutputs)}`)
-    // console.log(`Old uxOutputs: ${JSON.stringify(this.uTxouts)}\n New uxOutputs: ${JSON.stringify(resultingUnspentTxOuts)}`)
+    console.log(
+      `newUnspentTxOutputs: ${JSON.stringify(
+        newUnspentTxOutputs
+      )}\n consumedTxOutputs: ${JSON.stringify(consumedTxOutputs)}`
+    );
+    console.log(
+      `Old uxOutputs: ${JSON.stringify(
+        this.uTxouts
+      )}\n New uxOutputs: ${JSON.stringify(resultingUnspentTxOuts)}`
+    );
     this.uTxouts = resultingUnspentTxOuts;
     this.uTxoutsDb.write(this.uTxouts);
   }
@@ -358,7 +396,7 @@ class BlockChain {
   // shan
   processTransactions(transactions) {
     // TODO:验证是否有效交易。。
-    return this.updateUnspentTxOutputs(transactions);
+    return this.updateUTxOutsFromTxs(transactions);
   }
 
   // 尝试将tx加入池子
@@ -412,7 +450,7 @@ class BlockChain {
 
   // 获取某个地址余额
   getBalance(address) {
-    console.log(`getBalance: ${address}, ${JSON.stringify(this.uTxouts)}`)
+    console.log(`getBalance: ${address}, ${JSON.stringify(this.uTxouts)}`);
     return this.uTxouts
       .filter((utxout) => utxout.address === address)
       .map((utxout) => utxout.amount)
@@ -479,7 +517,10 @@ class BlockChain {
     let peers = this.node.p2p.peers
       .filter((url) => url) // 过滤掉 undefined 或 null 的 URL
       .concat([this.node.p2p.wsurl]); // 添加本地节点的 URL
-    console.log(`Before deduplication ${JSON.stringify(peers)}, local`,this.node.p2p.wsurl);
+    console.log(
+      `Before deduplication ${JSON.stringify(peers)}, local`,
+      this.node.p2p.wsurl
+    );
     peers = Array.from(new Set(peers));
 
     return {
@@ -499,7 +540,7 @@ class BlockChain {
       this.getLastBlock().index + 1
     );
     const newBlock = this.generateNextBlock([coinBaseTx]);
-    this.updateUnspentTxOutputs([coinBaseTx]);
+    this.updateUTxOutsFromTxs([coinBaseTx]);
     return newBlock;
   }
 
@@ -515,7 +556,8 @@ class BlockChain {
     if (!this.checkBlock(newBlock, this.getLastBlock())) {
       return false;
     }
-    this.addBlock(newBlock)
+    this.addBlock(newBlock);
+    return true;
   }
 }
 
