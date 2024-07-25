@@ -98,7 +98,7 @@ class BlockChain {
     // 如果同步失败，就自己初始化
     const syncMsg = SyncMessage.deserialize(data);
 
-    // 同步逻辑。 最长链原则，
+    // todo : 同步逻辑。 最长链原则， ??
     const needUpdate = this.updateBlocks(syncMsg.blocks);
     if (needUpdate) { 
       // 与块上数据保持一致

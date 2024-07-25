@@ -1,152 +1,76 @@
-[js](https://www.runoob.com/js/js-howto.html)
+[js 菜鸟](https://www.runoob.com/js/js-howto.html)
 
 [200line blockchain](https://medium.com/@lhartikk/a-blockchain-in-200-lines-of-code-963cc1cc0e54#.dttbm9afr5)
 
 [Naivecoin: a tutorial for building a cryptocurrency](https://lhartikk.github.io/)
 
-[](https://github.com/conradoqg/naivecoin/tree/master)
+[navie coin github repo](https://github.com/conradoqg/naivecoin/tree/master)
 
 [websocket测试](https://wstool.js.org/)
-[区块链原理、架构与应用]
 
-# 第二章 blockchain
-1. 读取存储策略
-每个node维持区块链的副本。区块链数据包括：blocks, transactions, utxouts, transaction pool(未确认交易池）
-- blocks : json存储
-- transactions: 属于blocks, 单独json存储
-- utxouts : json存储
-- transaction pool : 存储在内存中，不持久化
+[区块链原理、架构与应用]()
 
-### 1.1 定义区块结构
-1. Block类 {index, timestamp, data, previoushash}
+# 一、 blockchain基本结构
+## 1. Block类
+
 ```json
-/*
 { // Block
     "index": 0, // (first block: 0)
-    "previousHash": "0", // (hash of previous block, first block is 0) (64 bytes)
+    "previousHash": "0", // (hash of previous block, first block is 0) (32 bytes)
     "timestamp": 1465154705, // number of seconds since January 1, 1970
-    "transactions": [ // list of transactions inside the block
+    "data": [ // list of transactions inside the block
         { // transaction 0
-            "id": "63ec3ac02f...8d5ebc6dba", // random id (64 bytes)
-            "hash": "563b8aa350...3eecfbd26b", // hash taken from the contents of the transaction: sha256 (id + data) (64 bytes)
-            "type": "regular", // transaction type (regular, fee, reward)
+            "id": "63ec3ac02f...8d5ebc6dba", // 
+            "hash": "563b8aa350...3eecfbd26b", // 
             "data": {
                 "inputs": [], // list of input transactions
                 "outputs": [] // list of output transactions
             }
-        }
+        },
     ],
 }
-*/
 ```
-- **作用**: 构建区块链的基本单元
-
-### 1.2 创建区块链结构
-1. BlockChain类
-- blocks 所有区块
-- blocksDb 区块链数据,  路径data/{name}/blocks.json
-a. 创建区块链
-- 从创世区块构建： 创世区块生成
-- 从文件读取：
- 文件读取工具
- read: 从json文件读取一个区块链数据，并转换为blockchain对象
+## 2. Transaction类
 
 ```json
-[
-    {
-        "index": 0,
-        "previoushash": "0",
-        "timestamp": "2024-07-15T05:56:16.090Z",
-        "data": "Genius Block"
-    }
-]
+{ // TX
+    "id": "ac4d025d96c0dd32ab1f69a7eb6ac566d4aa47c292d80053a1ae0d63e16437a3",
+    "hash": "c5d51904bbacd14e366f0a94c751735d8a2a2410c7adcaf7e726e49f42b3a0d7",
+    "publicKey": null, // 交易发起者公钥
+    "inputs": [
+        {
+            "txOutId": "", // 引用对于 txout所在的交易id
+            "txOutIndex": 1,
+            "signature": ""
+        }
+    ],
+    "outputs": [
+        {
+            "address": "3056301006072a8648ce3d020106052b8104000a03420004ec3cfc1f13d35d951fbf81fdbd9e5420dd1c7ed5ee97108490e792d75efba1129a33f410b6878a9fa90f45d25d0c6e2e3c793ec4aeb812b859e975dbbb866a50",
+            "amount": 50
+        }
+    ]
+}	
 ```
 
+### 2.1 UTXOUT
 
-```js
-class DB {
-    constructor(filePath) {
-        this.filePath = filePath;
-    }
+未花费交易输出，包含所有地址所有来源的余额，与blocks保持一致。
 
-    read(prototype) {
-        var content = fs.readFileSync(this.filePath)
-        return (prototype) ?  prototype.fromJson(JSON.parse(content)) :JSON.parse(content);
-    }
-}
-```
-blocks为数据，[block] 
+ ```json
+ {
+     "txOutId": "93461aa4048e64d77e7d627649f26813e41757c22563620185134e11eab30840",
+     "txOutIndex": 0,
+     "address": "3056301006072a8648ce3d020106052b8104000a03420004ec3cfc1f13d35d951fbf81fdbd9e5420dd1c7ed5ee97108490e792d75efba1129a33f410b6878a9fa90f45d25d0c6e2e3c793ec4aeb812b859e975dbbb866a50",
+     "amount": 50
+ }
+ ```
 
-3. Transaction类
-+ Transaction
-+ + id
-  + hash
-  + inputs
-  + outputs
-inputs : 包含交易发起者的多项资金来源。
+### 2.2 coinbase 交易
 
-
-
-Utxouts 更新
-
-
-- **作用**: 构建区块链的链式结构
-## 选择最长的链
-![image](https://github.com/user-attachments/assets/97bbcd73-eaf2-4e5f-8b76-11f9c79abea7)
-
-# 交易与运行机制
-![image](https://github.com/user-attachments/assets/a3722f04-2697-494d-b62e-0ed1e66e85fd)
-1. 各节点收到未确认交易时，放入自己Pool中，形成等待上链的区块。
-   Q：节点什么时候才能产生块？A：触发条件：交易池数量达到上限，固定时间间隔等...。
-2. 通过共识机制决定哪个节点上的块胜出。
-3. 新区快广播到各节点验证，
-4. 超过51%节点验证成功后，上链
-
-TX状态变化： 钱包发起交易--> 节点上返回未签名的交易--> 钱包签名后发回---> 节点做hash，转化为未确认的交易
-
-# 共识机制（工作量证明）：
-用户发起交易后，网络所有节点都会收到请求，但并不是所有节点都有能力记录交易。如POW工作量证明（挖矿），产生公认唯一的节点来记录。
-新区块选择：
-
-# 新区块验证
-## 交易验证
-
-
-# 第三章：网络服务
-
-## httpServer
-httpServer模块主要负责区块链节点的HTTP API接口。具体作用包括：
-
-- 提供API接口：通过HTTP请求与区块链节点进行交互，比如查询区块、查询交易、提交新的交易、挖矿等操作。
-- 处理客户端请求：接受并处理来自客户端的各种HTTP请求，并返回相应的数据或执行相应的操作。
-- 与用户或其他应用程序交互：允许用户或其他应用程序通过HTTP接口与区块链节点进行通信，从而实现数据查询和操作。
-## p2p
-p2p模块（在Naivecoin项目的简化版本中主要通过HTTP实现）负责节点之间的对等通信。具体作用包括：
-- 节点之间的同步：实现区块链数据在不同节点之间的同步，包括区块和交易的传播。
-- 网络拓扑的维护：维护一个由区块链节点组成的对等网络，确保节点能够发现并连接到其他节点。
-- 数据一致性：确保所有节点上的区块链数据保持一致，即每个节点都拥有相同的区块链副本。
-- 交易和区块的传播：当一个节点接收到新的交易或挖到新的区块时，将这些信息传播给网络中的其他节点，以确保整个网络的数据是最新的。
-
-1. 节点启动：向引导节点发送上线，上报自己服务地址放入引导节点。 ---> 引导节点会定时同步，发送广播，同步信息包含（节点）已知的服务地址。 ---> 其他节点便感知到该节点上线。
-> 实际上，只要向一个节点发送上线，便可以广播
->
-> 
-
-# node
-An essential part of a node is to share and sync the blockchain with other nodes.The following rules are used to keep the network in sync.
-- When a node generates a new block, it broadcasts it to the network
-- When a node connects to a new peer it querys for the latest block
-- When a node encounters a block that has an index larger than the current known block, it either adds the block the its current chain or querys for the full blockchain.
-
-# Transactions
-https://lhartikk.github.io/jekyll/update/2017/07/12/chapter3.html
-
-> However, creating transactions is still very difficult. We must manually create the inputs and outputs of the transactions and sign them using our private keys. This will change when we introduce wallets in the next chapter.
-## 地址
-
-## Coinbase交易
 它是每个区块的第一笔交易，用于奖励矿工。Coinbase交易没有输入（txIns），因为它不花费之前的交易输出，而是从系统中创建新币。
-txIn.txOutIndex 没啥用， 可用blockIndex来标识这个独特交易
+	txIn.txOutIndex 没啥用， 可用blockIndex来标识这个独特交易
+
 ```js
 generateConinBaseTransaction(address,blockIndex) {
         const t = new Transaction()
@@ -162,32 +86,119 @@ generateConinBaseTransaction(address,blockIndex) {
 
     }
 ```
-# 第四章 Wallet
-The goal of the wallet is to create a more abstract interface **for the end user.**
+
+
+
+##  3. 数据存取策略
+
+### 3.1 数据存储
+
+每个node维持区块链的副本。区块链数据包括：blocks, transactions, utxouts, transaction pool(未确认交易池）
+
+- **blocks** : json存储。 （最根本的数据）
+- transactions: 不存储
+- utxouts : json存储。 与blocks保持一致，方便查询
+- transaction pool : 存储在内存中，不持久化
+
+###  3.2 对象反序列化 
+
+网络数据传输是JSON string （或者解出来JSON object）,  需要从其中解析出blocks 、block、transactions、transaction对象
+
+
+
+## 4. node类
+
+
+
+
+
+# 四、分布式同步
+
+## 1. 链选择更新原则
+
+- 选择最长的链
+
+![image](https://github.com/user-attachments/assets/97bbcd73-eaf2-4e5f-8b76-11f9c79abea7)
+
+
+
+# 二、交易与运行机制流程
+
+
+
+![image](https://github.com/user-attachments/assets/a3722f04-2697-494d-b62e-0ed1e66e85fd)
+1. 各节点收到未确认交易时，放入自己Pool中，形成等待上链的区块。
+   Q：节点什么时候才能产生块？A：触发条件：交易池数量达到上限，固定时间间隔等...。
+
+2. 通过共识机制决定哪个节点上的块胜出。
+
+3. 新区快广播到各节点验证，
+
+4. 超过51%节点验证成功后，上链
+
+   
+
+## 2. TX变化
+
+TX状态变化： 钱包发起交易--> 节点上返回未签名的交易--> 钱包签名后发回---> 节点做hash，转化为未确认的交易
+
+## 共识机制（工作量证明）：
+
+用户发起交易后，网络所有节点都会收到请求，但并不是所有节点都有能力记录交易。如POW工作量证明（挖矿），产生公认唯一的节点来记录。
+：
+
+## 新区块验证
+
+
+
+## 交易验证
+
+# 三、网络服务
+
+节点相关
+
+## httpServer
+httpServer 提供 对外（对客户）进行查询、交易操作。
+
+| API接口 |      |      |
+| ------- | ---- | ---- |
+|         |      |      |
+|         |      |      |
+|         |      |      |
+
+
+
+## p2p
+p2p模块负责节点之间的对等通信。p2p每个都有 服务端和客户端角色，发起请求一侧的为服务角色，可同时作为服务、客户响应。
+
+
+
+1. 节点启动：向引导节点发送上线，上报自己服务地址放入引导节点。 ---> 引导节点会定时同步，发送广播，同步信息包含（节点）已知的服务地址。 ---> 其他节点便感知到该节点上线。
+> 实际上，只要向一个节点发送上线，便可以广播
+>
+
+
+
+# 五、 Wallet
+The goal of the wallet is to create a more abstract interface **for the end user.** 
+
+位于前端侧。
+
+
 
 
 功能：
-- 创建钱包
+- 创建导入钱包
 - 看到余额
 - 发起转账
 
-- 
-## Generating and storing the private key
-
-## Wallet balance
+## 1. balance获取
 This consequently means that anyone can solve the balance of a given address.
-余额只是 未经消费的输出。 所以只需找到adress的utxout，金额加起来即可
+	余额只是 未经消费的输出。 所以只需找到adress的utxout，金额加起来即可
 
-# Generating transactions
 
-Let’s play out a bit more complex transaction scenario:
-1. User C has initially 0 coins
-2. User C receives 3 transactions worth of 10, 20 and 30 coins
-3. User C wants to send 55 coins to user D. What will the transaction look like?
 
-![image](https://github.com/user-attachments/assets/fccecfa2-af3f-44be-a021-940f1b7b199c)
-
-# 第五章：Transaction relaying
+# 六：Transaction relaying
 Typically, when someone wants to include a transaction to the blockchain (= send coins to some address ) he broadcasts the transaction to the network and hopefully some node will mine the transaction to the blockchain.
 it means you don’t need to mine a block yourself, in order to include a transaction to the blockchain.
 

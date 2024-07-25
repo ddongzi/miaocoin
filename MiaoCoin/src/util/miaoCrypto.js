@@ -1,4 +1,4 @@
-const {createHash, randomBytes, generateKeyPairSync,createSign} = require('crypto');
+const {createHash, randomBytes, generateKeyPairSync,createSign, randomInt} = require('crypto');
 
 class MiaoCrypto {
     static hash(data) {
@@ -10,6 +10,10 @@ class MiaoCrypto {
     
     static randomId(size = 64) {
         return randomBytes(Math.floor(size / 2)).toString('hex');
+    }
+
+    static randomInt(min, max){
+        return randomInt(2,5)
     }
 
     static sign(data, privateKey) {
