@@ -5,6 +5,11 @@ const {Transaction} = require("./transaction");
 class Transactions extends Array {
     // data:JSON解析的obj []
     static fromJson(data){
+        // console.log(`Transactions from JSON: ${JSON.stringify(data)}`);  // 打印出反序列化前的数据
+        if (!Array.isArray(data)) {
+            console.error("Invalid Transactions data")
+            return data; // 创世区块不是数组
+        }
         let transactions = new Transactions();
         data.forEach(element => {
             transactions.push(Transaction.fromJson(element))

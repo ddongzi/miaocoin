@@ -20,6 +20,8 @@ class Node {
             }
         })
     }
+    
+    // 初始化网络 p2p和http服务
     initNetwork(p2p,http) {
         this.p2p = p2p
         this.http = http
@@ -27,7 +29,7 @@ class Node {
         // 定时3分钟同步一次
         this.syncTimer = function () {
             console.log('sync timer triggered...')
-            setInterval(() => this.requestSync(), 5000 *1)
+            setInterval(() => this.requestSync(), 1000 *60 *3)
         }
         this.syncTimer()
     }

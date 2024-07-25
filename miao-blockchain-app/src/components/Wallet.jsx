@@ -129,6 +129,8 @@ function Wallet() {
       txin.signature = MyCrypto.sign(tx.id,MyCrypto.pemToHex(privateKey))
       return txin;
     });
+    // 签名之后添加自己的公钥
+    tx.publicKey = address
   };
   const handleTransfer = () => {
     if (!amount || !address) {
@@ -141,6 +143,7 @@ function Wallet() {
       .then((response) => {
         setSuccessMessage("转账成功！");
         signTx(JSON.parse(response.data))
+        
         setTransactionId(response.data.id); // 假设 API 返回交易ID
         setAmount("");
         setAddress("");

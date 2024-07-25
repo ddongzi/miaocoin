@@ -26,6 +26,8 @@ class Transaction {
         this.id = null
         this.hash = null
 
+        this.publicKey = null
+
         this.inputs= []
         this.outputs = []
         
@@ -77,6 +79,7 @@ class Transaction {
         return MiaoCrypto.hash(JSON.stringify(this.id + this.hash + JSON.stringify(this.data)))
     }
     static fromJson(data) {
+        // console.log(`Transaction from JSON: ${JSON.stringify(data)}`);  // 打印出反序列化前的数据
         let tx = new Transaction()
         Object.keys(data).forEach(key => {
             tx[key] = data[key]

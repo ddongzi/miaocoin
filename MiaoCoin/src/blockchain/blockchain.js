@@ -219,6 +219,12 @@ class BlockChain {
   }
   // 检查新来的区块是否符合要求
   checkBlock(newBlock, previousBlock) {
+    if (!previousBlock) {
+      // 前面区块不存在：说明 链相差至少2个块，放弃此次添加，等待同步
+      console.error(`Check block failed: previous block not exist`)
+      return false;
+    }
+
     if (previousBlock.index + 1 !== newBlock.index) {
       console.error(
         `CheckBlock failed :Invalid index. Expected ${
@@ -228,17 +234,15 @@ class BlockChain {
       return false;
     }
     if (previousBlock.toHash() !== newBlock.previoushash) {
-      console.log(previousBlock.toHash() !== newBlock.previoushash);
       console.error(
-        `Invalid previous hash, \n${
-          newBlock.previoushash
-        }\n${previousBlock.toHash()}`
+        `Invalid previous hash, expected:${previousBlock.toHash()} ,got: ${newBlock.previoushash},`
       );
       return false;
     }
     if (newBlock.toHash() !== newBlock.hash) {
       return false;
     }
+    console.log(`check block succeeded.`)
     return true;
   }
 
@@ -345,8 +349,8 @@ class BlockChain {
       })
       .concat(newUnspentTxOutputs);
 
-    // console.log(`newUnspentTxOutputs: ${JSON.stringify(newUnspentTxOutputs)}\n consumedTxOutputs: ${JSON.stringify(consumedTxOutputs)}`)
-    // console.log(`Old uxOutputs: ${JSON.stringify(this.uTxouts)}\n New uxOutputs: ${JSON.stringify(resultingUnspentTxOuts)}`)
+    console.log(`newUnspentTxOutputs: ${JSON.stringify(newUnspentTxOutputs)}\n consumedTxOutputs: ${JSON.stringify(consumedTxOutputs)}`)
+    console.log(`Old uxOutputs: ${JSON.stringify(this.uTxouts)}\n New uxOutputs: ${JSON.stringify(resultingUnspentTxOuts)}`)
     this.uTxouts = resultingUnspentTxOuts;
     this.uTxoutsDb.write(this.uTxouts);
   }
@@ -408,7 +412,7 @@ class BlockChain {
 
   // 获取某个地址余额
   getBalance(address) {
-    // console.log(`getBalance: ${address}, ${JSON.stringify(unspentTxOutputs)}`)
+    console.log(`getBalance: ${address}, ${JSON.stringify(this.uTxouts)}`)
     return this.uTxouts
       .filter((utxout) => utxout.address === address)
       .map((utxout) => utxout.amount)
@@ -467,6 +471,7 @@ class BlockChain {
     tx.inputs = txInputs;
     return tx;
   }
+
   // 返回区块链同步信息
   getBlockchainSyncData() {
     console.log(`get blockchain sync data....`);
@@ -487,7 +492,7 @@ class BlockChain {
       },
     };
   }
-  // 通过挖矿产生
+  // 通过挖矿产生区块
   generateNextBlockWithMine() {
     const coinBaseTx = Transaction.generateConinBaseTransaction(
       this.node.miner.address,
@@ -496,6 +501,21 @@ class BlockChain {
     const newBlock = this.generateNextBlock([coinBaseTx]);
     this.updateUnspentTxOutputs([coinBaseTx]);
     return newBlock;
+  }
+
+  // 收到其他节点的 新区块
+  receiveNewBlock(newBlock) {
+    console.log(`receive new block.... ${JSON.stringify(newBlock)}`);
+    // TODO: 接收到新区块，加入到区块链
+    // 1. 验证新区块是否合法
+    // 2. 验证新区块是否是上一个区块的后续区块
+    // 3. 验证新区块中的所有交易是否有效
+    // 4. 加入新区块到区块链
+    // 5. 重新计算 UTXO
+    if (!this.checkBlock(newBlock, this.getLastBlock())) {
+      return false;
+    }
+    this.addBlock(newBlock)
   }
 }
 

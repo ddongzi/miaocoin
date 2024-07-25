@@ -2,6 +2,7 @@ const { write } = require("fs-extra");
 const WebSocket = require("ws");
 const EventEmitter = require("events");
 const { getLocalIP } = require("../util/netUtil");
+const Block = require("../blockchain/block");
 
 const MessageType = {
   QUERY_LATEST: 0, // 查询最新区块
@@ -24,26 +25,26 @@ class P2P {
     console.log(`P2P constructor , wsurl: ${this.wsurl}`);
     this.emitter = new EventEmitter();
 
-    this.sockets = []; // 客户端套接字：保持连接 （自己为服务端
+    this.sockets = []; // 客户端套接字：保持连接 （自己为服务端）
+
     this.peers = []; // 服务端对端地址：
-    this.peerSockets = []; // 服务端socket
-    this.initServer();  // 
-    this.initClient();  // 客户端角色
+    this.peerSockets = []; // 服务端socket （自己为客户端）
+
+    this.initServer(); // 服务端角色
+    this.initClient(); // 客户端角色
   }
 
   // 初始化自己客户端角色
-  initClient(){
+  initClient() {
     // 连接到引导节点：
-    const socket = this.connectPeer('ws://172.17.0.2:4000')
-
+    const socket = this.connectPeer("ws://172.17.0.2:4000");
   }
 
   initServer() {
-
     this.server = new WebSocket.Server({ port: this.port });
     this.server.on("connection", (socket, req) => {
       this.sockets.push(socket);
-      console.log(`client connected .IP  `);
+      console.log(`client connected .`);
 
       // 连接关闭时触发
       socket.on("close", function () {
@@ -65,6 +66,7 @@ class P2P {
     });
     console.log(`P2p listening on ws://localhost:${this.port}`);
   }
+
   // 作为服务端，初始化与客户端请求
   initConnection(socket) {
     this.initRequestMessageHandler(socket);
@@ -74,10 +76,10 @@ class P2P {
   initRequestMessageHandler = (socket) => {
     socket.on("message", (data) => {
       const message = JSON.parse(data);
-      console.log(`Received requst message :  ${JSON.stringify(message)}`);
+      console.log(`Received requst message :  ${data}`);
 
       switch (message.type) {
-        case MessageType.QUERY_LATEST:
+        case MessageType.QUERY_LATEST:``
           this.queryLatestBlock(ws);
           break;
         case MessageType.QUERY_ALL:
@@ -99,15 +101,19 @@ class P2P {
           socket.send(JSON.stringify(resmsg));
           break;
         case MessageType.PEER_P2P_UP:
-            const peer = message.data.wsurl;
-            this.updatePeers([peer]);
-            break;
+          // 节点P2P服务上线
+          const peer = message.data.wsurl;
+          this.updatePeers([peer]);
+          break;
+        case MessageType.NEW_BLOCK:
+          // 收到 新块
+          this.node.blockchain.receiveNewBlock(Block.fromJson(message.data));
+          break;
       }
     });
   };
   // 更新对等节点列表并连接新的节点
   updatePeers(peers) {
-
     // 找出新的对等节点
     const newPeers = peers.filter((peer) => !this.peers.includes(peer));
 
@@ -117,7 +123,6 @@ class P2P {
     // 对新的对等节点发起连接
     newPeers.forEach((peer) => this.connectPeer(peer));
     console.log(`update peers .${JSON.stringify(this.peers)}`);
-
   }
 
   // 作为客户端，发起连接，接受回复
@@ -127,21 +132,23 @@ class P2P {
     const socket = new WebSocket(peer);
 
     socket.on("open", () => {
-        this.peerSockets.push(socket);
-        socket.send(JSON.stringify({
-            'type':MessageType.PEER_P2P_UP,
-            'description': 'peer p2p service up',
-            'data':{
-                'wsurl': this.wsurl // 发送自己服务地址
-            }
-        }))
-        console.log(`push socket: ${this.peerSockets.length}`);
+      this.peerSockets.push(socket);
+      socket.send(
+        JSON.stringify({
+          type: MessageType.PEER_P2P_UP,
+          description: "peer p2p service up",
+          data: {
+            wsurl: this.wsurl, // 发送自己服务地址
+          },
+        })
+      );
+      // console.log(`push socket: ${this.peerSockets.length}`);
     });
     socket.on("error", (error) => {
       console.error("WebSocket error observed:", error);
     });
     this.initResponseMessageHandler(socket);
-    
+
     return socket;
   }
 
@@ -149,11 +156,7 @@ class P2P {
   initResponseMessageHandler(socket) {
     socket.on("message", (data) => {
       const message = JSON.parse(data);
-      console.log(
-        `Received response message from ${socket.url} :  ${JSON.stringify(
-          data
-        )}`
-      );
+      console.log(`Received response message :  ${data}`);
 
       switch (message.type) {
         case MessageType.RESPONSE_BLOCKCHAIN:
@@ -164,8 +167,7 @@ class P2P {
             JSON.stringify(message.data)
           );
           break;
-        case MessageType.NEW_BLOCK:
-          break;
+
       }
     });
   }
