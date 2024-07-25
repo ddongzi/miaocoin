@@ -1,11 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { CircularProgress } from '@mui/material';
 import Masonry from 'react-masonry-css';
-import { getBlocks } from '../apiService';
+import { getBlocks, useApi } from '../apiService';
 import BlockCard from './BlockCard';
 import './BlockchainBrowser.css';
+import { useNode } from '../NodeContext';
 
 function BlockchainBrowser() {
+
+    const {nodeUrl} = useNode()
+    const {getBlocks} = useApi()
+
     const [blocks, setBlocks] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -28,7 +33,7 @@ function BlockchainBrowser() {
 
     return (
         <div>
-            <h2>Blockchain Browser</h2>
+            <h2>Blockchain Browser From Node: {nodeUrl}</h2>
             <Masonry
                 breakpointCols={breakpointColumnsObj}
                 className="my-masonry-grid"

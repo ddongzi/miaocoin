@@ -94,6 +94,17 @@ class HttpServer {
         this.app.get('/getTransactionHistory',(req,res) => {
             res.send(this.blockchain.getTransactionHistory())
         })
+        this.app.get('/getNodeDetails',(req, res) => {
+
+            const blockhashes = this.blockchain.blocks.map(block => block.hash);
+            const mineraddress = this.node.miner.address;
+            console.log(`get node details: ${JSON.stringify(blockhashes)} , ${mineraddress}`)
+            res.send({
+                'blockhashes': blockhashes,
+               'mineraddress': mineraddress
+            })
+        })
+   
         this.listen('0.0.0.0', this.port)
     }
     

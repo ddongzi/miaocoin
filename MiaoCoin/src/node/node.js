@@ -28,8 +28,9 @@ class Node {
 
         // 定时3分钟同步一次
         this.syncTimer = function () {
-            console.log('sync timer triggered...')
-            setInterval(() => this.requestSync(), 1000 *60 *3)
+            const nminutes = 3
+            console.log(`sync timer triggered...${nminutes}`)
+            setInterval(() => this.requestSync(), 1000 *60 *nminutes)
         }
         this.syncTimer()
     }

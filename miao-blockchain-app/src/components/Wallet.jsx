@@ -23,16 +23,15 @@ import {
 } from "@mui/material";
 import { CopyAll, MoreVert } from "@mui/icons-material";
 import {
-  getWalletInfo,
-  transfer,
-  getTransactionHistory,
-  createWallet,
-  importWallet,
+  useApi,
 } from "../apiService";
 import MyCrypto from "../myCrypto";
 import useLocalStorage from "../hooks/useLocalStorage";
 
 function Wallet() {
+
+  const {getWalletInfo, transfer,getTransactionHistory} = useApi()
+
   const [loading, setLoading] = useState(false);
   const [transferLoading, setTransferLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");

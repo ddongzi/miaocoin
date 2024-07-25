@@ -1,25 +1,30 @@
+// apiService.js
 import axios from 'axios';
+import { useNode } from './NodeContext';
 
-const apiClient = axios.create({
-    baseURL: 'http://localhost:3001', // 默认访问节点node1
-    headers: {
-        'Content-Type': 'application/json',
-    },
-});
+const useApiClient = () => {
+    const { nodeUrl } = useNode();
 
-export const getBlocks = () => apiClient.get('/blocks');
-export const getBlockDetail = (hash) => apiClient.get(`/block/${hash}`);
-export const getWalletInfo = (address) => apiClient.post('/wallet', {
-    address
-});
-export const transfer = (sender, receiver,amount ) => apiClient.post('/createTransaction', {
-    sender,
-    receiver,
-    amount
-})
-export const getTransactionHistory = () => apiClient.get('/getTransactionHistory');
-export const connectToP2PNode = (peer) => apiClient.post('/addPeer', {
-    peer
-});
+    const apiClient = axios.create({
+        baseURL: nodeUrl,
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    });
 
-export const importWallet = () => apiClient.get('/importWallet');
+    return apiClient;
+};
+
+export const useApi = () => {
+    const apiClient = useApiClient();
+
+    return {
+        getBlocks: () => apiClient.get('/blocks'),
+        getBlockDetail: (hash) => apiClient.get(`/block/${hash}`),
+        getWalletInfo: (address) => apiClient.post('/wallet', { address }),
+        transfer: (sender, receiver, amount) => apiClient.post('/createTransaction', { sender, receiver, amount }),
+        getTransactionHistory: () => apiClient.get('/getTransactionHistory'),
+        connectToP2PNode: (peer) => apiClient.post('/addPeer', { peer }),
+        getNodeDetails: () => apiClient.get('/getNodeDetails'),
+    };
+};

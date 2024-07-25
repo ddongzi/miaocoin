@@ -1,12 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { CircularProgress, Card, CardContent, Typography } from '@mui/material';
-import { getBlockDetail } from '../apiService';
+import { getBlockDetail, useApi } from '../apiService';
 
 function BlockDetail() {
+    
+    const { getBlockDetail } = useApi()
+    
     const { hash } = useParams();
     const [block, setBlock] = useState(null);
     const [loading, setLoading] = useState(true);
+
 
     useEffect(() => {
         getBlockDetail(hash)
