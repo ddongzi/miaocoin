@@ -16,7 +16,7 @@ class Miner {
     }
     init() {
         this.loadKeys()
-        this.timer = setInterval(() => this.mine(), 1000 * 60 * MiaoCrypto.randomInt(1,10))
+        this.timer = setInterval(() => this.mine(), 1000 * 60 * MiaoCrypto.randomInt(3,30))
     }
     // 主动定时1分支去请求产生区块
     mine() {

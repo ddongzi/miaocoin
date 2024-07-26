@@ -33,6 +33,7 @@ class BlockChain {
     this.pool = [];
     // 事件发射
     this.emitter = new EventEmitter();
+    
     this.init();
 
     this.node = node;
@@ -43,6 +44,7 @@ class BlockChain {
 
   // 初始节点使用
   init() {
+    // todo :容器初始化写死同一个创世区块 
     // TODO: 只有初始节点需要初始化，其他节点向peer同步
     console.log("#0 init blockchain..");
     // Create from genius block if blockchain is empty.
@@ -517,9 +519,13 @@ class BlockChain {
   getBlockchainSyncData() {
     console.log(`return blockchain sync data.... `);
     // 获取所有对等节点的 URL，并去重
-    let peers = this.node.p2p.peers.keys()
-      .filter((url) => url) // 过滤掉 undefined 或 null 的 URL
-      .concat([this.node.p2p.wsurl]); // 添加本地节点的 URL
+    let peers =[]
+    for (let url of this.node.p2p.peers.keys()) {
+      if (url) { // 过滤掉 undefined 或 null 的 URL
+        peers.push(url);
+      }
+    }
+    peers.push(this.node.p2p.wsurl)
     peers = Array.from(new Set(peers));
 
     return {
@@ -560,6 +566,7 @@ class BlockChain {
       // 从新区块更新utxouts
       this.updateUTxOutsFromTxs(newBlock.data)
     }
+    console.log(`receiveNewBlock Successfully`)
     // 广播同步: 你们要来找我同步了
     this.node.p2p.broadcast({
       'type': MessageType.NOTIFY_SYNC,

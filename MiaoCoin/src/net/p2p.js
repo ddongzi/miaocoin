@@ -31,7 +31,7 @@ class P2P {
 
     this.sockets = []; // 客户端套接字：保持连接 （自己为服务端）
 
-    this.peers = new Map(); // 服务端对端： <wsurl,socket>
+    this.peers = new Map(); // 服务端对端： <wsurl,socket>,不包含自己
 
     this.initServer(); // 服务端角色
     this.initClient(); // 客户端角色
@@ -123,7 +123,7 @@ class P2P {
   // 更新对等节点列表并连接新的节点
   updatePeers(peers) {
     // 找出新的对等节点
-    const newPeers = peers.filter((peer) => {
+    var newPeers = peers.filter((peer) => {
       for (let url of this.peers.keys()) {
         if (url === peer) {
           return false
@@ -131,12 +131,12 @@ class P2P {
       }
       return true
     });
-    
+    newPeers = newPeers.filter(peer => peer !== this.wsurl)
     for(let newPeer of newPeers) {
-      const socket = connectPeer(newPeer)
+      const socket = this.connectPeer(newPeer)
       this.peers.set(newPeer,socket)
     }
-    console.log(`update peers ${JSON.stringfy(newPeers)}`)
+    console.log(`update peers ${JSON.stringify(this.peers.keys())}`)
   }
 
   // 作为客户端，发起连接，接受回复
@@ -169,7 +169,7 @@ class P2P {
   sendPeer(peer,msg) {
     // 检查socket状态
     if (this.peers.has(peer)) {
-      this.peers.get(peer).send(JSON.stringfy(msg))
+      this.peers.get(peer).send(JSON.stringify(msg))
     } else {
       //
       console.log(`send peer ${peer} not recorded`)
