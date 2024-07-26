@@ -143,6 +143,7 @@ class BlockChain {
   // 生成一个块 并加入链上
   generateNextBlock(data) {
     var previousBlock = this.getLastBlock();
+    var previousHash = previousBlock.hash
     var nextIndex = previousBlock.index + 1;
     var nextTimestamp = new Date().toUTCString();
     var difficulty = this.getDifficulty();
@@ -153,7 +154,7 @@ class BlockChain {
         nextIndex,
         nextTimestamp,
         data,
-        previousBlock.hash,
+        previousHash,
         difficulty,
         nouce
       );
@@ -169,7 +170,7 @@ class BlockChain {
       difficulty,
       nouce,
       data,
-      previousBlock.hash,
+      previousHash,
       hash
     );
     this.addBlock(newBlock);
@@ -240,7 +241,9 @@ class BlockChain {
       this.blocksDb.write(this.blocks);
 
       console.info(`Blockchain  added Block#${newBlock.index}`);
+      return true
     }
+    return false
   }
   // 检查新来的区块是否符合要求
   checkBlock(newBlock, previousBlock) {
@@ -512,15 +515,11 @@ class BlockChain {
 
   // 返回区块链同步信息
   getBlockchainSyncData() {
-    console.log(`get blockchain sync data....`);
+    console.log(`return blockchain sync data.... `);
     // 获取所有对等节点的 URL，并去重
-    let peers = this.node.p2p.peers
+    let peers = this.node.p2p.peers.keys()
       .filter((url) => url) // 过滤掉 undefined 或 null 的 URL
       .concat([this.node.p2p.wsurl]); // 添加本地节点的 URL
-    console.log(
-      `Before deduplication ${JSON.stringify(peers)}, local`,
-      this.node.p2p.wsurl
-    );
     peers = Array.from(new Set(peers));
 
     return {
@@ -556,7 +555,19 @@ class BlockChain {
     if (!this.checkBlock(newBlock, this.getLastBlock())) {
       return false;
     }
-    this.addBlock(newBlock);
+    const added = this.addBlock(newBlock);
+    if (added) {
+      // 从新区块更新utxouts
+      this.updateUTxOutsFromTxs(newBlock.data)
+    }
+    // 广播同步: 你们要来找我同步了
+    this.node.p2p.broadcast({
+      'type': MessageType.NOTIFY_SYNC,
+      'description' :'notify you sync from me',
+      'data':{
+        'wsurl':this.node.p2p.wsurl
+      }
+    })
     return true;
   }
 }

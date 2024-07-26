@@ -30,7 +30,7 @@ import useLocalStorage from "../hooks/useLocalStorage";
 
 function Wallet() {
 
-  const {getWalletInfo, transfer,getTransactionHistory} = useApi()
+  const {getWalletInfo, transfer,getTransactionHistory,sendSignedTx} = useApi()
 
   const [loading, setLoading] = useState(false);
   const [transferLoading, setTransferLoading] = useState(false);
@@ -123,16 +123,19 @@ function Wallet() {
   };
 
 
-  const signTx = (tx) => {
-    tx.inputs = tx.inputs.map((txin, index) => {
-      txin.signature = MyCrypto.sign(tx.id,MyCrypto.pemToHex(privateKey))
+  const signTx =  (tx) => {
+    console.log(`sign TX ${tx.inputs.length}`)
+    tx.inputs = tx.inputs.map(async (txin, index) => {
+      txin.signature = await MyCrypto.sign(tx.id,MyCrypto.pemToHex(privateKey))
+      console.log(txin.signature)
       return txin;
     });
     // 签名之后添加自己的公钥
     tx.publicKey = address
+    return tx
   };
   const handleTransfer = () => {
-    if (!amount || !address) {
+    if (!amount || !receiver) {
       setErrorMessage("请填写所有字段。");
       return;
     }
@@ -141,15 +144,20 @@ function Wallet() {
     transfer(address, receiver, amount)
       .then((response) => {
         setSuccessMessage("转账成功！");
-        signTx(JSON.parse(response.data))
+        const signedTx = signTx(response.data)
+
+        sendSignedTx(signedTx)
+          .then((response) => {})
+          .catch((err) => {})
+
         
         setTransactionId(response.data.id); // 假设 API 返回交易ID
         setAmount("");
-        setAddress("");
+        setReceiver("");
         setTransferLoading(false);
       })
-      .catch(() => {
-        setErrorMessage("转账失败。请重试。");
+      .catch((err) => {
+        setErrorMessage(`转账失败。请重试。 `);
         setTransferLoading(false);
       });
   };
@@ -230,7 +238,7 @@ function Wallet() {
                 <TextField
                   label="收款地址"
                   value={receiver}
-                  onChange={(e) => setAddress(e.target.value)}
+                  onChange={(e) => setReceiver(e.target.value)}
                   fullWidth
                   margin="normal"
                 />

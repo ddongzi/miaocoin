@@ -26,5 +26,6 @@ export const useApi = () => {
         getTransactionHistory: () => apiClient.get('/getTransactionHistory'),
         connectToP2PNode: (peer) => apiClient.post('/addPeer', { peer }),
         getNodeDetails: () => apiClient.get('/getNodeDetails'),
+        sendSignedTx: (tx) => apiClient.post('/sendSignedTx',{tx})
     };
 };

@@ -46,7 +46,6 @@ class MyCrypto {
 
     static async importPrivateKey(pem) {
         const keyBuffer = MyCrypto.pemToBuffer(pem);
-        console.log(`key buffer: ${keyBuffer}`)
         return await crypto.subtle.importKey(
             'pkcs8',
             keyBuffer,
@@ -67,7 +66,6 @@ class MyCrypto {
     static pemToBuffer(pem) {
         const stripped = pem.replace(/-----BEGIN .*-----/, '').replace(/-----END .*-----/, '').replace(/\s/g, '');
         // 将 Base64 编码的内容解码为 Buffer
-        console.log(`Base64 ${stripped}`)
         return Uint8Array.from(atob(stripped), c => c.charCodeAt(0));
     }
 
