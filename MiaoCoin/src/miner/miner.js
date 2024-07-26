@@ -60,8 +60,9 @@ class Miner {
           description: "new block",
           data: newBlock,
         });
-        // 3分钟后开始下一轮
-        setTimeout(() => this.worker.postMessage("startMining"), 1000 * 60 * 3);
+        // todo : 消除状态，重新开挖
+        this.stopMining()
+        this.startMining();
       }
     });
 
