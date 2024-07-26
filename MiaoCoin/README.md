@@ -249,6 +249,14 @@ Transaction pool is a structure that contains all of the “unconfirmed transact
 
 
 
+# 八、线程
+
+## mine woker线程
+
+如果一直mine,while循环会阻塞主线程。worker线程可以理解为执行脚本， 主线程向其传值（非复杂对象），线程之间独立， 所以不可以调用this函数等，static可以。线程之间通信传输数据,格式为JSON。
+
+
+
 
 # Docker 部署
  `` 
