@@ -10,14 +10,14 @@ const MessageType = {
   RESPONSE_BLOCKCHAIN: 2, // 回复上面请求
   QUERY_TRANSACTION_POOL: 3, // 查询节点的交易池
   RESPONSE_TRANSACTION_POOL: 4,
-  
+
   REQUEST_SYNC_BLOCKCHAIN: 5, // 请求同步区块链
   RESPONSE_SYNC_BLOCKCHAIN: 6, // 收到区块链同步的回复
-  
+
   NEW_BLOCK: 7, // 发掘到新的区块
   PEER_P2P_UP: 8, // 节点主动上报自己的服务地址
-  
-  NOTIFY_SYNC: 9 // 主动通知同步
+
+  NOTIFY_SYNC: 9, // 主动通知同步
 };
 
 class P2P {
@@ -40,7 +40,7 @@ class P2P {
   // 初始化自己客户端角色
   initClient() {
     // 连接到引导节点：
-    const socket = this.connectPeer("ws://172.17.0.2:4000");
+    this.updatePeers(['ws://172.17.0.2:4000']);
   }
 
   initServer() {
@@ -67,7 +67,7 @@ class P2P {
         })
       );
     });
-    console.log(`P2p listening on ws://localhost:${this.port}`);
+    console.log(`P2p listening on ws://${this.wsurl}:${this.port}`);
   }
 
   // 作为服务端，初始化与客户端请求
@@ -82,7 +82,7 @@ class P2P {
       console.log(`Received requst message :  ${data}`);
 
       switch (message.type) {
-        case MessageType.QUERY_LATEST:``
+        case MessageType.QUERY_LATEST:
           this.queryLatestBlock(ws);
           break;
         case MessageType.QUERY_ALL:
@@ -114,10 +114,10 @@ class P2P {
           break;
         case MessageType.NOTIFY_SYNC:
           // 向指定peer请求同步
-          const peerurl = message.data.wsurl
-          this.node.requestSync(peerurl)
-          break
-        }
+          const peerurl = message.data.wsurl;
+          this.node.requestSync(peerurl);
+          break;
+      }
     });
   };
   // 更新对等节点列表并连接新的节点
@@ -126,17 +126,17 @@ class P2P {
     var newPeers = peers.filter((peer) => {
       for (let url of this.peers.keys()) {
         if (url === peer) {
-          return false
+          return false;
         }
       }
-      return true
+      return true;
     });
-    newPeers = newPeers.filter(peer => peer !== this.wsurl)
-    for(let newPeer of newPeers) {
-      const socket = this.connectPeer(newPeer)
-      this.peers.set(newPeer,socket)
+    newPeers = newPeers.filter((peer) => peer !== this.wsurl);
+    console.log(`new peers  ${JSON.stringify(newPeers)}`);
+    for (let newPeer of newPeers) {
+      const socket = this.connectPeer(newPeer);
     }
-    console.log(`update peers ${JSON.stringify(this.peers.keys())}`)
+    console.log(`update peers ${[...this.peers.keys()]}`);
   }
 
   // 作为客户端，发起连接，接受回复
@@ -144,19 +144,20 @@ class P2P {
     console.log(`Connecting to ${peer}`);
     //peer : 'ws://localhost:8080'
     const socket = new WebSocket(peer);
+    
+    this.peers.set(peer, socket);
 
     socket.on("open", () => {
-      this.peers.set(peer,socket)
-      socket.send(
+      console.log(`socket on : ${peer}`);
+      this.broadcast(
         JSON.stringify({
           type: MessageType.PEER_P2P_UP,
           description: "peer p2p service up",
           data: {
             wsurl: this.wsurl, // 发送自己服务地址
-          },
+          }
         })
       );
-      // console.log(`push socket: ${this.peers.length}`);
     });
     socket.on("error", (error) => {
       console.error("WebSocket error observed:", error);
@@ -166,13 +167,13 @@ class P2P {
     return socket;
   }
   // 作为客户端，向某个对端（服务端）发送消息
-  sendPeer(peer,msg) {
+  sendPeer(peer, msg) {
     // 检查socket状态
     if (this.peers.has(peer)) {
-      this.peers.get(peer).send(JSON.stringify(msg))
+      this.peers.get(peer).send(JSON.stringify(msg));
     } else {
       //
-      console.log(`send peer ${peer} not recorded`)
+      console.log(`send peer ${peer} not recorded`);
     }
   }
 
@@ -191,20 +192,25 @@ class P2P {
             JSON.stringify(message.data)
           );
           break;
-
       }
     });
   }
   // 广播：
   broadcast(msg) {
     console.log(
-      `broadcast ${JSON.stringify(msg)}, sockets : ${this.peers.length}`
+      `broadcast ${JSON.stringify(msg)}, sockets : ${this.peers.size}`
     );
     // 向各peer服务地址发出请求
-    for (var socket of this.peers.values()) {
-      socket.send(JSON.stringify(msg))    
+    for (var peer of this.peers.keys()) {
+      const socket = this.peers.get(peer);
+      if (socket.readyState === WebSocket.OPEN) {
+        console.log(`broadcast to ${peer}`);
+        socket.send(JSON.stringify(msg));
+      } else {
+        console.log(`WebSocket not open. ${peer} Retrying...`);
+        setTimeout(() => socket.send(JSON.stringify(msg)), 5000); // 隔5秒重试一次
+      }
     }
-     
   }
 }
 module.exports = { P2P, MessageType };

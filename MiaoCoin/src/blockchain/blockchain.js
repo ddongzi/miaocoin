@@ -14,8 +14,8 @@ const BLOCKS_FILE = "/blocks.json";
 const Transactions_FILE = "/transactions.json";
 const UTXOUTS_FILE = "/utxouts.json";
 
-const BLOCK_GENERATION_INTERNAL = 30; // 10 seconds
-const DIFFICULTY_ADJUSTMENT_INTERVAL = 3; // 10 blocks
+const BLOCK_GENERATION_INTERNAL = 60 * 3; // 3 min 
+const DIFFICULTY_ADJUSTMENT_INTERVAL = 3; // 3 blocks
 
 const DATA_PATH = "/home/dong/JSCODE/MiaoCoin/data/blockchain";
 class BlockChain {
@@ -120,6 +120,7 @@ class BlockChain {
     return this.getLastBlock().difficulty;
   }
   getAdjustedDifficulty() {
+    console.log(`difficulty adjusted.`)
     const prevAdjustedBlock =
       this.blocks[this.blocks.length - DIFFICULTY_ADJUSTMENT_INTERVAL];
     const timeExpected =
@@ -128,7 +129,7 @@ class BlockChain {
       new Date(this.getLastBlock().timestamp) -
       new Date(prevAdjustedBlock.timestamp);
     if (timeTaken > timeExpected / 2) {
-      return prevAdjustedBlock.difficulty + 1;
+      return prevAdjustedBlock.difficulty * 3;
     } else if (timeTaken > timeExpected * 2) {
       return prevAdjustedBlock.difficulty - 1;
     } else {
@@ -182,7 +183,7 @@ class BlockChain {
   createGeniusBlock() {
     let index = 0;
     let timestamp = new Date().toUTCString();
-    let difficulty = 10;
+    let difficulty = 50;
     let nouce = 0;
     let data = "Genesis Block";
     let previoushash = "0000000000000000";

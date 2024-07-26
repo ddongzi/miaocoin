@@ -11,7 +11,7 @@ class Block{
         this.hash = hash;
         this.difficulty = difficulty;
         this.nouce = nouce
-        console.log(`Block constructor ${JSON.stringify(this)}`);
+        // console.log(`Block constructor ${JSON.stringify(this)}`);
     }
     toHash() {
         return Block.caculateHash(this.index, this.timestamp,JSON.stringify(this.data),

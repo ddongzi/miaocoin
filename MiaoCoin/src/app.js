@@ -4,6 +4,8 @@ const Node = require("./node/node");
 const HttpServer = require("./net/httpServer");
 const { P2P } = require("./net/p2p");
 
+const { Worker } = require('worker_threads');
+
 const httpPort = process.env.HTTP_PORT || 3000;
 const p2pPort = process.env.P2P_PORT || 4000;
 const role = process.env.ROLE || 'ROOT';

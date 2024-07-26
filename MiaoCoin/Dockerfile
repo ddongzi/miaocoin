@@ -16,7 +16,7 @@ RUN npm i
 COPY . .
 
 # 安装网络工具
-# RUN apt-get update && apt-get install -y ip
+# RUN apt-get update && apt-get install -y iputils-ping
 
 # 暴露 HTTP 服务端口
 
