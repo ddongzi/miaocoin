@@ -9,6 +9,7 @@ const hexToBinary = require("../util/util");
 const { BASE_PATH } = require("../config");
 const { MessageType } = require("../net/p2p");
 const SyncMessage = require("../net/syncMessage");
+const { type } = require("os");
 
 const BLOCKS_FILE = "/blocks.json";
 const Transactions_FILE = "/transactions.json";
@@ -129,7 +130,7 @@ class BlockChain {
       new Date(this.getLastBlock().timestamp) -
       new Date(prevAdjustedBlock.timestamp);
     if (timeTaken > timeExpected / 2) {
-      return prevAdjustedBlock.difficulty * 3;
+      return prevAdjustedBlock.difficulty + 2;
     } else if (timeTaken > timeExpected * 2) {
       return prevAdjustedBlock.difficulty - 1;
     } else {
@@ -144,46 +145,12 @@ class BlockChain {
   }
 
   // 生成一个块 并加入链上
-  generateNextBlock(data) {
-    var previousBlock = this.getLastBlock();
-    var previousHash = previousBlock.hash
-    var nextIndex = previousBlock.index + 1;
-    var nextTimestamp = new Date().toUTCString();
-    var difficulty = this.getDifficulty();
-    var hash = "";
-    let nouce = 0;
-    while (true) {
-      hash = Block.caculateHash(
-        nextIndex,
-        nextTimestamp,
-        data,
-        previousHash,
-        difficulty,
-        nouce
-      );
-      if (this.hasMatchesDifficulty(hash, difficulty)) {
-        break;
-      }
-      nouce++;
-    }
 
-    const newBlock = new Block(
-      nextIndex,
-      nextTimestamp,
-      difficulty,
-      nouce,
-      data,
-      previousHash,
-      hash
-    );
-    this.addBlock(newBlock);
-    return newBlock;
-  }
   // 链上创世区块
   createGeniusBlock() {
     let index = 0;
     let timestamp = new Date().toUTCString();
-    let difficulty = 50;
+    let difficulty = 20;
     let nouce = 0;
     let data = "Genesis Block";
     let previoushash = "0000000000000000";
@@ -195,7 +162,7 @@ class BlockChain {
       difficulty,
       nouce
     );
-    return new Block(
+    const newBlock = new Block(
       index,
       timestamp,
       difficulty,
@@ -204,6 +171,8 @@ class BlockChain {
       previoushash,
       hash
     );
+    console.log(`Created genius block ${newBlock}`)
+    return newBlock
   }
 
   isValidBlockStructure(block) {
@@ -246,15 +215,20 @@ class BlockChain {
       console.info(`Blockchain  added Block#${newBlock.index}`);
       return true
     }
+    console.log(`addblock checkblock failed`)
     return false
   }
   // 检查新来的区块是否符合要求
   checkBlock(newBlock, previousBlock) {
+
+    console.log(`checking block...`)
+  
     if (!previousBlock) {
       // 前面区块不存在：说明 链相差至少2个块，放弃此次添加，等待同步
       console.error(`Check block failed: previous block not exist`);
       return false;
     }
+    console.log(`checking phrase1 succeed...`)
 
     if (previousBlock.index + 1 !== newBlock.index) {
       console.error(
@@ -264,6 +238,8 @@ class BlockChain {
       );
       return false;
     }
+    console.log(`checking phrase2 succeed...`)
+    
     if (previousBlock.toHash() !== newBlock.previoushash) {
       console.error(
         `Invalid previous hash, expected:${previousBlock.toHash()} ,got: ${
@@ -272,7 +248,10 @@ class BlockChain {
       );
       return false;
     }
+    console.log(`checking phrase3 succeed...`)
+
     if (newBlock.toHash() !== newBlock.hash) {
+      console.error(`newBlock hash failed, expected ${newBlock.hash}, got ${newBlock.toHash()}`)
       return false;
     }
     console.log(`check block succeeded.`);
@@ -297,12 +276,7 @@ class BlockChain {
       );
     }
   }
-  // 检测hash是否满足difficulty要求
-  hasMatchesDifficulty(hash, difficulty) {
-    const hashBinary = hexToBinary(hash);
-    const prefix = "0".repeat(difficulty);
-    return hashBinary.startsWith(prefix);
-  }
+
 
   // 通过一笔交易生成一个块:
   generateNextBlockWithTransaction(senderAddress, receiverAdress, amount) {
@@ -382,19 +356,19 @@ class BlockChain {
         )
       
     );
-    console.log(`After filter: ${JSON.stringify(resultingUnspentTxOuts)}`);
+    // console.log(`After filter: ${JSON.stringify(resultingUnspentTxOuts)}`);
     resultingUnspentTxOuts = resultingUnspentTxOuts.concat(newUnspentTxOutputs);
 
-    console.log(
-      `newUnspentTxOutputs: ${JSON.stringify(
-        newUnspentTxOutputs
-      )}\n consumedTxOutputs: ${JSON.stringify(consumedTxOutputs)}`
-    );
-    console.log(
-      `Old uxOutputs: ${JSON.stringify(
-        this.uTxouts
-      )}\n New uxOutputs: ${JSON.stringify(resultingUnspentTxOuts)}`
-    );
+    // console.log(
+    //   `newUnspentTxOutputs: ${JSON.stringify(
+    //     newUnspentTxOutputs
+    //   )}\n consumedTxOutputs: ${JSON.stringify(consumedTxOutputs)}`
+    // );
+    // console.log(
+    //   `Old uxOutputs: ${JSON.stringify(
+    //     this.uTxouts
+    //   )}\n New uxOutputs: ${JSON.stringify(resultingUnspentTxOuts)}`
+    // );
     this.uTxouts = resultingUnspentTxOuts;
     this.uTxoutsDb.write(this.uTxouts);
   }
@@ -539,16 +513,7 @@ class BlockChain {
       },
     };
   }
-  // 通过挖矿产生区块
-  generateNextBlockWithMine() {
-    const coinBaseTx = Transaction.generateConinBaseTransaction(
-      this.node.miner.address,
-      this.getLastBlock().index + 1
-    );
-    const newBlock = this.generateNextBlock([coinBaseTx]);
-    this.updateUTxOutsFromTxs([coinBaseTx]);
-    return newBlock;
-  }
+
 
   // 收到其他节点的 新区块
   receiveNewBlock(newBlock) {

@@ -150,13 +150,13 @@ class P2P {
     socket.on("open", () => {
       console.log(`socket on : ${peer}`);
       this.broadcast(
-        JSON.stringify({
+        {
           type: MessageType.PEER_P2P_UP,
           description: "peer p2p service up",
           data: {
             wsurl: this.wsurl, // 发送自己服务地址
           }
-        })
+        }
       );
     });
     socket.on("error", (error) => {
@@ -195,7 +195,7 @@ class P2P {
       }
     });
   }
-  // 广播：
+  // 广播： msg为对象类型
   broadcast(msg) {
     console.log(
       `broadcast ${JSON.stringify(msg)}, sockets : ${this.peers.size}`

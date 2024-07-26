@@ -6,6 +6,9 @@ const {
 } = require("fs-extra");
 const MiaoCrypto = require("../util/miaoCrypto");
 const { MessageType } = require("../net/p2p");
+const path = require("path");
+const { Worker } = require("worker_threads");
+const Block = require("../blockchain/block");
 
 // 每个节点上都有矿工角色。  负责签名产生区块
 const DATA_PATH = "/home/dong/JSCODE/MiaoCoin/data/miner";
@@ -16,41 +19,73 @@ class Miner {
   constructor(node) {
     this.loadKeys();
     this.node = node;
-    this.init();
+    this.blockchain = node.blockchain;
+    this.worker = null; // 挖矿线程
   }
-  init() {}
-  // 主动定时1分支去请求产生区块
-  mine() {
-    while (1) {
-        const now = new Date();
-        console.log(`Miner is mining...`);
-        const newBlock = this.node.blockchain.generateNextBlockWithMine();
-        const finished = new Date();
-        const timeDifference = finished.getTime() - now.getTime();
-    
-        // 转换为小时、分钟和秒
-        const hours = Math.floor(timeDifference / (1000 * 60 * 60));
-        const minutes = Math.floor(
-          (timeDifference % (1000 * 60 * 60)) / (1000 * 60)
-        );
-        const seconds = Math.floor((timeDifference % (1000 * 60)) / 1000);
-    
-        console.log(`Miner finished.
-            Cost time : ${hours}h ${minutes}m ${seconds}s. 
-            Difficulty: ${newBlock.difficulty}, Nouce : ${newBlock.nouce}`
-        );
-    
-        // 广播
+
+  // 开始挖矿
+  startMining() {
+    if (this.worker) {
+      console.log("Miner is already mining.");
+      return;
+    }
+    const previousBlock = this.blockchain.getLastBlock();
+    const { index, hash } = previousBlock;
+
+    const difficulty = this.blockchain.getDifficulty();
+    // 从(脚本地址)文件创建一个新的worker线程
+    this.worker = new Worker(path.resolve(__dirname, "./mineWorker.js"), {
+      workerData: {
+        info: {
+          address: this.address,
+          index: index + 1,
+          previousHash: hash,
+          difficulty: difficulty,
+        },
+      },
+    });
+
+    // 接受worker线程消息
+    this.worker.on("message", (msg) => {
+      if (msg.type === "newBlock") {
+        console.log(`New block mined: ${msg.newBlock}`);
+        // 添加到链上， 更新utxouts
+        const newBlock = Block.fromJson(msg.newBlock)
+        this.blockchain.addBlock(newBlock);
+        this.blockchain.updateUTxOutsFromTxs(newBlock.data);
+
+        // 向主线程广播新区块
         this.node.p2p.broadcast({
           type: MessageType.NEW_BLOCK,
           description: "new block",
           data: newBlock,
         });
-        ( async ()=>{
-            await new Promise(resolve => setTimeout(resolve, 1000 * 10));
-        })
+        // 3分钟后开始下一轮
+        setTimeout(() => this.worker.postMessage("startMining"), 1000 * 60 * 3);
+      }
+    });
+
+    this.worker.on("error", (error) => {
+      console.error("Worker error:", error);
+      this.worker = null; // 清理 Worker 实例
+    });
+
+    this.worker.on("exit", (code) => {
+      console.log(`Worker stopped with exit code ${code}`);
+      this.worker = null; // 清理 Worker 实例
+    });
+
+    this.worker.postMessage("startMining");
+  }
+
+  // 停止挖矿
+  stopMining() {
+    if (this.worker) {
+      this.worker.terminate();
+      this.worker = null;
     }
   }
+
   // 初始化加载 矿工密钥
   loadKeys() {
     // 读取私钥和公钥

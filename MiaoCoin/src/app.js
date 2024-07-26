@@ -19,3 +19,4 @@ const http = new HttpServer(httpPort, node);
 node.initNetwork(p2p, http);
 node.initMiner()
 
+node.miner.startMining()

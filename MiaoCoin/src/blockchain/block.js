@@ -14,7 +14,8 @@ class Block{
         // console.log(`Block constructor ${JSON.stringify(this)}`);
     }
     toHash() {
-        return Block.caculateHash(this.index, this.timestamp,JSON.stringify(this.data),
+
+        return Block.caculateHash(this.index, this.timestamp,this.data,
             this.previoushash, this.difficulty, this.nouce
         )
     }

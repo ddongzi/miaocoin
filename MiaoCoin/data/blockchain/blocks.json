@@ -2,10 +2,10 @@
     {
         "index": 0,
         "previoushash": "0000000000000000",
-        "timestamp": "Fri, 26 Jul 2024 08:51:47 GMT",
+        "timestamp": "Fri, 26 Jul 2024 12:59:38 GMT",
         "data": "Genesis Block",
-        "hash": "87b51b513f833aaa2e1ed840c54f838b0fffb22fc3d3dd026ee8567f1f0aec73",
-        "difficulty": 30,
+        "hash": "16100076cee8012ea17b345e4828331c8815c199ee46606d570cbb2e965bcd97",
+        "difficulty": 20,
         "nouce": 0
     }
 ]
