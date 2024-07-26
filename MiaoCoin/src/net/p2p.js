@@ -106,7 +106,7 @@ class P2P {
         case MessageType.PEER_P2P_UP:
           // 节点P2P服务上线
           let peerwsurl = message.data.wsurl;
-          this.updatePeers([peer]);
+          this.updatePeers([peerwsurl]);
           break;
         case MessageType.NEW_BLOCK:
           // 收到 新块
@@ -123,7 +123,15 @@ class P2P {
   // 更新对等节点列表并连接新的节点
   updatePeers(peers) {
     // 找出新的对等节点
-    const newPeers = peers.filter((peer) => !this.peers.keys().includes(peer));
+    const newPeers = peers.filter((peer) => {
+      for (let url of this.peers.keys()) {
+        if (url === peer) {
+          return false
+        }
+      }
+      return true
+    });
+    
     for(let newPeer of newPeers) {
       const socket = connectPeer(newPeer)
       this.peers.set(newPeer,socket)
