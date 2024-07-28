@@ -6,21 +6,19 @@ const hexToBinary = require("../util/util");
 const { info } = workerData;
 console.log(`[Worker Thread] Mine worker param : ${info.difficulty}`);
 // 通过挖矿产生区块
-function generateNextBlockWithMine() {
+function generateNextBlockWithMine(callback) {
   const coinBaseTx = Transaction.generateConinBaseTransaction(
     info.address,
     info.index
   );
-  var res = null;
   generateNextBlock([coinBaseTx])
     .then((newBlock) => {
-      res = newBlock;
-      console.log(`Block new block ${JSON.stringify(newBlock)}`)
+      callback(null, newBlock);
     })
     .catch((err) => {
-      console.error(`generateNextBlock failed: ${err}`);
+      console.error(`[Worker Thread]generateNextBlock failed: ${err}`);
+      callback(err, null);
     });
-  return res;
 }
 // 检测hash是否满足difficulty要求
 function hasMatchesDifficulty(hash, difficulty) {
@@ -77,26 +75,28 @@ function mine() {
   const now = new Date();
   console.log(`[Worker Thread] Miner is mining...`);
 
-  const newBlock = generateNextBlockWithMine();
-  const finished = new Date();
-  const timeDifference = finished.getTime() - now.getTime();
+  generateNextBlockWithMine((err, newBlock) => {
+    if (err) {
+      console.error("Error generating block:", err);
+    } else {
+      const finished = new Date();
+      const timeDifference = finished.getTime() - now.getTime();
 
-  // 转换为小时、分钟和秒
-  const hours = Math.floor(timeDifference / (1000 * 60 * 60));
-  const minutes = Math.floor((timeDifference % (1000 * 60 * 60)) / (1000 * 60));
-  const seconds = Math.floor((timeDifference % (1000 * 60)) / 1000);
+      // 转换为小时、分钟和秒
+      const hours = Math.floor(timeDifference / (1000 * 60 * 60));
+      const minutes = Math.floor(
+        (timeDifference % (1000 * 60 * 60)) / (1000 * 60)
+      );
+      const seconds = Math.floor((timeDifference % (1000 * 60)) / 1000);
+      console.log(`[Worker Thread] Miner finished.
+        Cost time : ${hours}h ${minutes}m ${seconds}s. 
+        Difficulty: ${newBlock.difficulty}, Nouce : ${newBlock.nouce}`);
 
-  if (newBlock) {
-    console.log(`[Worker Thread] Miner finished.
-      Cost time : ${hours}h ${minutes}m ${seconds}s. 
-      Difficulty: ${newBlock.difficulty}, Nouce : ${newBlock.nouce}`);
-
-    setTimeout(() => {
-      parentPort.postMessage({ type: "newBlock", newBlock });
-    }, 1000 * 10);
-  } else {
-    console.error(`mine error `)
-  }
+      setTimeout(() => {
+        parentPort.postMessage({ type: "newBlock", newBlock });
+      }, 1000 * 10);
+    }
+  });
 }
 
 parentPort.on("message", (msg) => {
