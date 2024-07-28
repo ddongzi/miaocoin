@@ -44,4 +44,8 @@ class MiaoCrypto {
         return buffer.toString('hex');
     }
 }
+console.log(MiaoCrypto.pemToHex(MiaoCrypto.generateKeyPair().publicKey))
+console.log(MiaoCrypto.pemToHex(MiaoCrypto.generateKeyPair().publicKey))
+console.log(MiaoCrypto.pemToHex(MiaoCrypto.generateKeyPair().publicKey))
+
 module.exports = MiaoCrypto

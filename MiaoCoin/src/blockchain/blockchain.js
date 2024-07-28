@@ -440,10 +440,7 @@ class BlockChain {
 
   // 生成一笔交易（未确认交易：不添加到区块链）：从senderAddress的余额中扣除amount给receiverAdress。
   generateTxWithoutSign(senderAddress, receiverAdress, amount) {
-    // console.log(`===> ${this.publicKey} send ${amount} to ${receiverAdress}`)
-
-    console.log(`generateTransactionWithoutSignature......`);
-
+    console.log(`generate tx without sign... ===> ${senderAddress} send ${amount} to ${receiverAdress}`)
     const tx = new Transaction();
 
     const myUTxOutputs = this.uTxouts.filter((utxout) => {
@@ -488,6 +485,8 @@ class BlockChain {
     tx.outputs = txOutputs;
     tx.id = Transaction.getTransactionId(tx);
     tx.inputs = txInputs;
+    console.log(`generate tx without sign  finished. ${JSON.stringify(tx)}`);
+
     return tx;
   }
 

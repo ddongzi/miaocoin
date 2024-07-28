@@ -50,7 +50,7 @@ class Miner {
     // 接受worker线程消息
     this.worker.on("message", (msg) => {
       if (msg.type === "newBlock") {
-        console.log(`New block mined: ${msg.newBlock}`);
+        console.log(`New block mined: ${JSON.stringify(msg.newBlock)}`);
         // 添加到链上， 更新utxouts
         const newBlock = Block.fromJson(msg.newBlock)
         const added = this.blockchain.addBlock(newBlock);
