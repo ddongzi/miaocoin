@@ -2,6 +2,7 @@ const { parentPort, workerData } = require("worker_threads");
 const { Transaction } = require("../blockchain/transaction");
 const Block = require("../blockchain/block");
 const hexToBinary = require("../util/util");
+const Transactions = require("../blockchain/transactions");
 
 const { info } = workerData;
 console.log(`[Worker Thread] Mine worker param : ${info.difficulty}`);
@@ -11,7 +12,9 @@ function generateNextBlockWithMine(callback) {
     info.address,
     info.index
   );
-  generateNextBlock([coinBaseTx])
+  const txs = Transactions.fromJson(JSON.parse(info.txs));
+  console.log(`Generating next block with ${JSON.stringify(coinBaseTx)} and ${JSON.stringify(txs)}`);
+  generateNextBlock([coinBaseTx].concat(txs))
     .then((newBlock) => {
       callback(null, newBlock);
     })

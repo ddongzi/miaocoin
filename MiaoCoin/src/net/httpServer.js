@@ -79,9 +79,12 @@ class HttpServer {
             const tx = this.blockchain.generateTxWithoutSign(sender,receiver,amount);
             res.send(tx)
         })
-        this.app.post('/addSignedTransaction', (req, res) => {
+        this.app.post('/sendSignedTx', (req, res) => {
+            // 放到未确认交易
             const tx = req.body.tx
             this.blockchain.updateTXhash(Transaction.fromJson(tx))
+            this.blockchain.addToTransactionPool(tx)
+            res.send(tx)
         })
         this.app.post('/wallet',(req, res)=> {
             const address = req.body.address;

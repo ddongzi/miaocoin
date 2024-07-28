@@ -1,5 +1,5 @@
 const { COINBASE_AMOUNT } = require("../config");
-const MiaoCrypto = require("../util/myCrypto");
+const MiaoCrypto = require("../util/miaoCrypto");
 class TxInput {
   constructor(txOutId, txOutIndex, signature) {
     this.txOutId = txOutId; // 与该输入相关的之前交易ID

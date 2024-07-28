@@ -3,13 +3,14 @@ const DB = require("../util/db");
 const Blocks = require("./blocks");
 const { Transaction, UTxOutput, TxInput, TxOutput } = require("./transaction");
 const Transactions = require("./transactions");
-const MiaoCrypto = require("../util/myCrypto");
+const MiaoCrypto = require("../util/miaoCrypto");
 const EventEmitter = require("events");
 const hexToBinary = require("../util/util");
 const { BASE_PATH } = require("../config");
 const { MessageType } = require("../net/p2p");
 const SyncMessage = require("../net/syncMessage");
 const { type } = require("os");
+const TransactionPool = require("./transactionPool");
 
 const BLOCKS_FILE = "/blocks.json";
 const Transactions_FILE = "/transactions.json";
@@ -31,7 +32,7 @@ class BlockChain {
     this.blocks = this.blocksDb.read(Blocks, new Blocks()); // 读取blocks数组
     this.uTxoutsDb = new DB(DATA_PATH + UTXOUTS_FILE);
     this.uTxouts = this.uTxoutsDb.read(null, []);
-    this.pool = [];
+    this.pool = new TransactionPool();
     // 事件发射
     this.emitter = new EventEmitter();
     
@@ -59,7 +60,6 @@ class BlockChain {
   // 完善TX hash
   updateTXhash(tx) {
     tx.hash = tx.toHash();
-    this.pool.push(tx);
   }
 
   // 更新Blocks，以及json.  返回是否更新了
@@ -306,14 +306,7 @@ class BlockChain {
   }
   // 通过未确认交易池 生成一个块
   generateNextBlockWithPool() {
-    const coinBaseTx = Transaction.generateConinBaseTransaction(
-      this.getLastBlock().index + 1
-    );
-    console.log(
-      `generateNextBlockWithPool....${JSON.stringify([coinBaseTx, this.pool])}`
-    );
-    this.updateUTxOutsFromTxs([coinBaseTx].concat(this.pool));
-    return this.generateNextBlock([coinBaseTx].concat(this.pool));
+    this.node.miner.startMining()
   }
 
   // 生成一笔交易 放入池子
@@ -382,16 +375,24 @@ class BlockChain {
   // 尝试将tx加入池子
   addToTransactionPool(tx) {
     if (this.isValidTxForPool(tx)) {
-      this.pool.push(tx);
+      this.pool.add(tx)
+      console.log(`add unconfirmed tx to pool successfully.`)
+
+      if (this.pool.isFull()) {
+        // 触发创建区块
+        console.log(`Pool is full, ready to generate next block.`)
+        this.generateNextBlockWithPool()
+      }
       return tx;
     }
+    console.log(`add unconfirmed tx to pool failed.`)
     return { tx: "error" };
   }
 
   // 未确认交易 加入 POOL之前校验: 1. 不能重复：此次Input的钱不能出现在之前的池子input里面(一份钱不能用两次)
   isValidTxForPool(targetTx) {
     let res = true;
-    this.pool.forEach((tx) => {
+    this.pool.getAll().forEach((tx) => {
       tx.inputs.forEach((txInput) => {
         const find = targetTx.inputs.find(
           (targetTxInput) =>
@@ -479,7 +480,7 @@ class BlockChain {
     if (leftAmount === 0) {
       txOutputs.push(txOutput);
     } else {
-      const leftTxOutput = new TxOutput(this.address, leftAmount);
+      const leftTxOutput = new TxOutput(senderAddress, leftAmount);
       txOutputs.push(txOutput);
       txOutputs.push(leftTxOutput);
     }

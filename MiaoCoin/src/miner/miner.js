@@ -4,7 +4,7 @@ const {
   writeFileSync,
   existsSync,
 } = require("fs-extra");
-const MiaoCrypto = require("../util/myCrypto");
+const MiaoCrypto = require("../util/miaoCrypto");
 const { MessageType } = require("../net/p2p");
 const path = require("path");
 const { Worker } = require("worker_threads");
@@ -35,8 +35,10 @@ class Miner {
     const difficulty = this.blockchain.getDifficulty();
     // 从(脚本地址)文件创建一个新的worker线程
     this.worker = new Worker(path.resolve(__dirname, "./mineWorker.js"), {
+      // 传入一些未确认交易
       workerData: {
         info: {
+          txs: JSON.stringify(this.blockchain.pool.getAll()), 
           address: this.address,
           index: index + 1,
           previousHash: hash,
@@ -61,9 +63,14 @@ class Miner {
           description: "new block",
           data: newBlock,
         });
-        // todo : 消除状态，重新开挖
+        // 只有需要时候才要你挖
+        //  todo : 消除状态，重新开挖
+        // this.stopMining()
+        // this.startMining();
         this.stopMining()
-        this.startMining();
+        // 
+        console.log(`clear pool .`)
+        this.blockchain.pool.clear()
       }
     });
 
@@ -78,7 +85,6 @@ class Miner {
     });
 
     
-
     this.worker.postMessage("startMining");
   }
 
