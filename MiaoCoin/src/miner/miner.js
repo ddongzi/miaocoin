@@ -77,6 +77,8 @@ class Miner {
       this.worker = null; // 清理 Worker 实例
     });
 
+    
+
     this.worker.postMessage("startMining");
   }
 

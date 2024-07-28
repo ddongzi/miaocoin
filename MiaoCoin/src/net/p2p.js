@@ -40,7 +40,7 @@ class P2P {
   // 初始化自己客户端角色
   initClient() {
     // 连接到引导节点：
-    this.updatePeers(['ws://172.17.0.2:4000']);
+    this.updatePeers(["ws://172.17.0.2:4000"]);
   }
 
   initServer() {
@@ -144,20 +144,18 @@ class P2P {
     console.log(`Connecting to ${peer}`);
     //peer : 'ws://localhost:8080'
     const socket = new WebSocket(peer);
-    
+
     this.peers.set(peer, socket);
 
     socket.on("open", () => {
       console.log(`socket on : ${peer}`);
-      this.broadcast(
-        {
-          type: MessageType.PEER_P2P_UP,
-          description: "peer p2p service up",
-          data: {
-            wsurl: this.wsurl, // 发送自己服务地址
-          }
-        }
-      );
+      this.broadcast({
+        type: MessageType.PEER_P2P_UP,
+        description: "peer p2p service up",
+        data: {
+          wsurl: this.wsurl, // 发送自己服务地址
+        },
+      });
     });
     socket.on("error", (error) => {
       console.error("WebSocket error observed:", error);
@@ -207,8 +205,14 @@ class P2P {
         console.log(`broadcast to ${peer}`);
         socket.send(JSON.stringify(msg));
       } else {
-        console.log(`WebSocket not open. ${peer} Retrying...`);
-        setTimeout(() => socket.send(JSON.stringify(msg)), 5000); // 隔5秒重试一次
+        let intervalId = setInterval(() => {
+          if (socket.readyState === WebSocket.OPEN) {
+            clearInterval(intervalId);
+            socket.send(JSON.stringify(msg));
+          } else {
+            console.log(`WebSocket not open. ${peer} Retrying...`);
+          }
+        }, 1000 * 5); // 5s 重试
       }
     }
   }
