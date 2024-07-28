@@ -1,5 +1,5 @@
 // block.js
-const MiaoCrypto = require('../util/miaoCrypto');
+const MiaoCrypto = require('../util/myCrypto');
 const Transaction = require('./transaction');
 const Transactions = require('./transactions');
 class Block{

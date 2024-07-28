@@ -4,7 +4,7 @@ const {
   writeFileSync,
   existsSync,
 } = require("fs-extra");
-const MiaoCrypto = require("../util/miaoCrypto");
+const MiaoCrypto = require("../util/myCrypto");
 const { MessageType } = require("../net/p2p");
 const path = require("path");
 const { Worker } = require("worker_threads");
