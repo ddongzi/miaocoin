@@ -257,6 +257,82 @@ Transaction pool is a structure that contains all of the “unconfirmed transact
 
 
 
+# 密码
+
+web crypto api 不支持spec256k1曲线参数。
+
+
+
+[前端window.crypto](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/importKey#examples)
+
+`crypto.webcrypto` 是nodejs端对浏览器window.crypto实现
+
+私钥结构分析：ECDSA P-256, ANS.1
+
+`308187020100301306072a8648ce3d020106082a8648ce3d030107046d306b0201010420855f56a8d38a20882aeeb5da6a96a322084b94b7afb596a5ea923b7d8509ed66a14403420004b812ccea1954de0e45859893d93034ef4b845dd2a1a83b9af3a2563929c00b8aa1fbca8a9a7560b199bf0de541a51208757dc1597259ac888dbaaf04ca385a4b `
+
+```md
+ECDSA P-256 私钥 DER 编码结构解析
+
+- **序列 (Sequence)**
+  - `30 81 87` 
+    - `30`: 序列类型
+    - `81 87`: 序列长度（135 字节）
+
+  - **版本号 (Integer)**
+    - `02 01 00`
+      - `02`: 整数类型
+      - `01`: 长度为 1 字节
+      - `00`: 版本号（通常为 0）
+
+  - **算法标识 (Sequence)**
+    - `30 13`
+      - `30`: 序列类型
+      - `13`: 序列长度（19 字节）
+    - **对象标识符 (OID)**
+      - `06 07 2A 86 48 CE 3D 02 01`
+        - `06`: OID 类型
+        - `07`: 长度为 7 字节
+        - `2A 86 48 CE 3D 02 01`: OID `1.2.840.10045.2.1` (EC 公钥)
+    - **曲线参数 (OID)**
+      - `06 08 2A 86 48 CE 3D 03 01 07`
+        - `06`: OID 类型
+        - `08`: 长度为 8 字节
+        - `2A 86 48 CE 3D 03 01 07`: OID `1.2.840.10045.3.1.7` (P-256)
+
+  - **私钥 (Octet String)**
+    - `04 6D`
+      - `04`: 八位字节字符串类型
+      - `6D`: 长度为 109 字节
+    - **序列 (Sequence)**
+      - `30 6B`
+        - `30`: 序列类型
+        - `6B`: 序列长度（107 字节）
+      - **版本号 (Integer)**
+        - `02 01 01`
+          - `02`: 整数类型
+          - `01`: 长度为 1 字节
+          - `01`: 版本号（通常为 1）
+      - **私钥数值 (Octet String)**
+        - `04 20 85 5F 56 A8 D3 8A 20 88 2A EE B5 DA 6A 96 A3 22 08 4B 94 B7 AF B5 96 A5 EA 92 3B 7D 85 09 ED 66`
+          - `04`: 八位字节字符串类型
+          - `20`: 长度为 32 字节
+          - `85 5F ... 66`: 私钥数值
+      - **公钥信息 (Context-specific tag)**
+        - `A1 44`
+          - `A1`: 上下文特定标签
+          - `44`: 标签内容长度为 68 字节
+        - **公钥 (BIT STRING)**
+          - `03 42 00 04 B8 12 CC EA 19 54 DE 0E 45 85 98 93 D9 30 34 EF 4B 84 5D D2 A1 A8 3B 9A F3 A2 56 39 29 C0 0B 8A A1 FB CA 8A 9A 75 60 B1 99 BF 0D E5 41 A5 12 08 75 7D C1 59 72 59 AC 88 8D BA AF 04 CA 38 5A 4B`
+            - `03`: BIT STRING 类型
+            - `42`: BIT STRING 长度为 66 字节
+            - `00`: 未使用的位数
+            - `04 B8 12 ... 5A 4B`: 公钥值（未压缩格式，包括 X 和 Y 坐标）
+
+```
+
+
+
 
 # Docker 部署
  `` 

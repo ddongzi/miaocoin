@@ -47,7 +47,7 @@ function Wallet() {
   const [address, setAddress] = useLocalStorage('address','');
   const [publicKey, setPublicKey] = useLocalStorage('publickKey','')
   const [privateKey, setPrivateKey] = useLocalStorage('privatekKey','')
-  const [balance, setBalance] = useLocalStorage('balance',0)
+  const [balance, setBalance] = useState(0)
 
   const [importPublicKey, setImportPublicKey] = useState('');
   const [importPrivateKey, setImportPrivateKey] = useState('');
@@ -110,7 +110,7 @@ function Wallet() {
     setAddress(MyCrypto.pemToHex(importPublicKey))
     setPrivateKey(importPrivateKey)
 
-    console.log(`导入钱包\n${importPublicKey}\n${privateKey}`);
+    console.log(`导入钱包\n${importPublicKey}\n${MyCrypto.pemToHex(importPrivateKey)}`);
     handleCloseImportDialog()
 
     // {'addresses': '' , 'balance': number}
@@ -126,6 +126,7 @@ function Wallet() {
   const signTx =  (tx) => {
     console.log(`sign TX ${tx.inputs.length}`)
     tx.inputs = tx.inputs.map(async (txin, index) => {
+      console.log(`sign txin ${index}`)
       txin.signature = await MyCrypto.sign(tx.id,MyCrypto.pemToHex(privateKey))
       console.log(txin.signature)
       return txin;

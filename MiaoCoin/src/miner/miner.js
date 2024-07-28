@@ -51,9 +51,10 @@ class Miner {
         console.log(`New block mined: ${msg.newBlock}`);
         // 添加到链上， 更新utxouts
         const newBlock = Block.fromJson(msg.newBlock)
-        this.blockchain.addBlock(newBlock);
-        this.blockchain.updateUTxOutsFromTxs(newBlock.data);
-
+        const added = this.blockchain.addBlock(newBlock);
+        if (added) {
+          this.blockchain.updateUTxOutsFromTxs(newBlock.data);
+        }
         // 向主线程广播新区块
         this.node.p2p.broadcast({
           type: MessageType.NEW_BLOCK,
