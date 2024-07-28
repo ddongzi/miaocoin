@@ -6,12 +6,12 @@ const hexToBinary = require("../util/util");
 const { info } = workerData;
 
 // 通过挖矿产生区块
-function generateNextBlockWithMine() {
+async function generateNextBlockWithMine() {
   const coinBaseTx = Transaction.generateConinBaseTransaction(
     info.address,
     info.index
   );
-  return generateNextBlock([coinBaseTx]);
+  return await generateNextBlock([coinBaseTx]);
 }
 // 检测hash是否满足difficulty要求
 function hasMatchesDifficulty(hash, difficulty) {
@@ -20,40 +20,45 @@ function hasMatchesDifficulty(hash, difficulty) {
   return hashBinary.startsWith(prefix);
 }
 // 生成一个区块
-function generateNextBlock(data) {
-  var timestamp = new Date().toUTCString();
-  var hash = "";
-  let nouce = 0;
-  while (true) {
-    hash = Block.caculateHash(
-      info.index,
-      timestamp,
-      data,
-      info.previousHash,
-      info.difficulty,
-      nouce
-    );
-    if (hasMatchesDifficulty(hash, info.difficulty)) {
-      break;
+async function generateNextBlock(data) {
+  return new Promise(function (resolve, reject) {
+    var timestamp = new Date().toUTCString();
+    var hash = "";
+    let nouce = 0;
+    function whileNounce() {
+      hash = Block.caculateHash(
+        info.index,
+        timestamp,
+        data,
+        info.previousHash,
+        info.difficulty,
+        nouce
+      );
+      if (hasMatchesDifficulty(hash, info.difficulty)) {
+        // 外部需要从这里返回的构建
+        const newBlock =  new Block(
+          info.index,
+          timestamp,
+          info.difficulty,
+          nouce,
+          data,
+          info.previousHash,
+          hash
+        );
+        resolve(newBlock);
+      } else {
+        nouce++;
+        setTimeout(whileNounce, 10); // 防止while占用过高，0.01s while一次
+      }
     }
-    nouce++;
-  }
-  // 外部需要从这里返回的构建
-  return new Block(
-    info.index,
-    timestamp,
-    info.difficulty,
-    nouce,
-    data,
-    info.previousHash,
-    hash
-  );
+    whileNounce();
+  });
 }
 
-function mine() {
+async function mine() {
   const now = new Date();
   console.log(`[Worker Thread] Miner is mining...`);
-  const newBlock = generateNextBlockWithMine();
+  const newBlock = await generateNextBlockWithMine();
   const finished = new Date();
   const timeDifference = finished.getTime() - now.getTime();
 
@@ -73,6 +78,6 @@ function mine() {
 
 parentPort.on("message", (msg) => {
   if (msg === "startMining") {
-    mine();
+     mine();
   }
 });

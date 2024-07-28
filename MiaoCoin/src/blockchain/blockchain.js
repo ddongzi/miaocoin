@@ -130,7 +130,7 @@ class BlockChain {
       new Date(this.getLastBlock().timestamp) -
       new Date(prevAdjustedBlock.timestamp);
     if (timeTaken > timeExpected / 2) {
-      return prevAdjustedBlock.difficulty + 2;
+      return prevAdjustedBlock.difficulty + 1;
     } else if (timeTaken > timeExpected * 2) {
       return prevAdjustedBlock.difficulty - 1;
     } else {
@@ -150,7 +150,7 @@ class BlockChain {
   createGeniusBlock() {
     let index = 0;
     let timestamp = new Date().toUTCString();
-    let difficulty = 20;
+    let difficulty = 5;
     let nouce = 0;
     let data = "Genesis Block";
     let previoushash = "0000000000000000";
