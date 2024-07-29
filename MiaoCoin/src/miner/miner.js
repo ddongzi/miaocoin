@@ -103,8 +103,10 @@ class Miner {
     const publicKeyPath = DATA_PATH + PUBLIC_KEY_FILE;
     if (!existsSync(publicKeyPath) || !existsSync(privateKeyPath)) {
       const { privateKey, publicKey } = MiaoCrypto.generateKeyPair();
-      writeFileSync(publicKeyPath, publicKey);
-      writeFileSync(privateKeyPath, privateKey);
+      const publicKeyPem = MiaoCrypto.exportPublicKey(publicKey)
+      const privateKeyPem = MiaoCrypto.exportPrivateKey(privateKey)
+      writeFileSync(publicKeyPath, publicKeyPem);
+      writeFileSync(privateKeyPath, privateKeyPem);
     }
     this.privateKey = MiaoCrypto.pemToHex(readFileSync(privateKeyPath, "utf8"));
     this.publicKey = MiaoCrypto.pemToHex(readFileSync(publicKeyPath, "utf8"));

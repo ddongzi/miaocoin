@@ -33,7 +33,7 @@ class Transaction {
   }
 
   // 生成交易ID
-  static getTransactionId(transaction) {
+  static async  getTransactionId(transaction) {
     const inputContent = transaction.inputs
       .map((t) => t.txOutId + t.txOutIndex)
       .reduce((a, b) => a + b, "");
@@ -44,7 +44,7 @@ class Transaction {
     // console.log("Input Content:", inputContent);
     // console.log("Output Content:", outputContent);
     // console.log("Concatenated Content:", inputContent + outputContent);
-    return MiaoCrypto.hash(inputContent + outputContent);
+    return await MiaoCrypto.hash(inputContent + outputContent);
   }
 
   // 在未花费交易输出列表中 根据交易ID和index ，找到 utxout
@@ -55,6 +55,12 @@ class Transaction {
   }
 
   //  交易者对 inputs/index 进行签名
+  /**
+   * no use
+   * @param {*} privateKey 
+   * @param {*} index 
+   * @returns 
+   */
   signatureTXInputs(privateKey, index) {
     const dataToSign = this.id;
     this.inputs[index].signature = MiaoCrypto.sign(dataToSign, privateKey);
@@ -97,7 +103,7 @@ class Transaction {
   }
 
   // 生成最初交易
-  static generateConinBaseTransaction(minerAddress, blockIndex) {
+  static  generateConinBaseTransaction(minerAddress, blockIndex) {
     const t = new Transaction();
     const txIn = new TxInput();
     txIn.signature = "";

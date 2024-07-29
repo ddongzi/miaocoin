@@ -56,8 +56,24 @@ class BlockChain {
       this.blocksDb.write(this.blocks);
     }
   }
+ // 验证交易签名
+ verifySignTx(tx) {
+    
+    let res = true;
+    for (const txin of tx.inputs) {
+      const pubkeyObj = MiaoCrypto.importPublicKey(tx.publicKey)
+      const sigBuffer = MiaoCrypto.base64ToArrayBuffer(txin.signature)
+      const dataBuffer = MiaoCrypto.stringToArrayBuffer(tx.id)
+      if (!MiaoCrypto.verify(pubkeyObj, sigBuffer,dataBuffer)) {
+        res = false;
+        console.log(`Invalid sign for tx ${tx.id}`);
+        break; // 退出循环
+      }
+    }
+    return res;
+    
+  }
 
-  // 完善TX hash
   updateTXhash(tx) {
     tx.hash = tx.toHash();
   }
@@ -85,7 +101,8 @@ class BlockChain {
   // 从同步数据utxouts更新
   updateUTXouts(utxOuts) {
     console.log(`update utxouts ...`);
-    if (MiaoCrypto.hash(JSON.stringify(utxOuts)) === MiaoCrypto.hash(JSON.stringify(this.uTxouts))) {
+    if (MiaoCrypto.hash(JSON.stringify(utxOuts)) === 
+      MiaoCrypto.hash(JSON.stringify(this.uTxouts))) {
       console.log(`no need to update.`);
       return;
     }
@@ -440,7 +457,7 @@ class BlockChain {
 
   // 生成一笔交易（未确认交易：不添加到区块链）：从senderAddress的余额中扣除amount给receiverAdress。
   generateTxWithoutSign(senderAddress, receiverAdress, amount) {
-    console.log(`generate tx without sign... ===> ${senderAddress} send ${amount} to ${receiverAdress}`)
+    // console.log(`generate tx without sign... ===> ${senderAddress} send ${amount} to ${receiverAdress}`)
     const tx = new Transaction();
 
     const myUTxOutputs = this.uTxouts.filter((utxout) => {
@@ -485,11 +502,11 @@ class BlockChain {
     tx.outputs = txOutputs;
     tx.id = Transaction.getTransactionId(tx);
     tx.inputs = txInputs;
-    console.log(`generate tx without sign  finished. ${JSON.stringify(tx)}`);
+    // console.log(`generate tx without sign  finished. ${JSON.stringify(tx)}`);
 
     return tx;
   }
-
+ 
   // 返回区块链同步信息
   getBlockchainSyncData() {
     console.log(`return blockchain sync data.... `);

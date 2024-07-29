@@ -128,14 +128,22 @@ function Wallet() {
       tx.inputs.map(async (txin, index) => {
         console.log(`sign txin ${index}`);
         txin.signature = await MyCrypto.sign(tx.id, privateKey);
-        console.log(`signed txin ${index} with signature ${txin.signature}`);
+        console.log(`signed txin ${index}, data ${tx.id} with signature ${txin.signature}, private key ${MyCrypto.pemToHex(privateKey)}, pub hex ${address}`);
         return txin;
       })
     );
     // 签名之后添加自己的公钥
-    tx.publicKey = address;
+    tx.publicKey = publicKey;
     return tx;
   };
+  const verifyTx = async (tx) => {
+    tx.inputs = await Promise.all(
+      tx.inputs.forEach(async (txin) => {
+        const isVaid = await MyCrypto.verify(tx.id, txin.signature,publicKey)
+        console.log(`verified txin ,data : ${tx.id}, valid ${isVaid}, signature : `);
+      })
+    );
+  }
   const handleTransfer = () => {
     if (!amount || !receiver) {
       setErrorMessage("请填写所有字段。");
@@ -145,13 +153,23 @@ function Wallet() {
     setTransferLoading(true);
     transfer(address, receiver, amount)
       .then((response) => {
+        console.log('transfer res ',response.data)
         signTx(response.data)
           .then((signedTx) => {
-            setSuccessMessage("转账成功！");
-            console.log("success");
-            sendSignedTx(signedTx)
-              .then((response) => {})
-              .catch((err) => {});
+            verifyTx(signedTx)
+              .then((isvalid) => {
+                if (isvalid) {
+                  setSuccessMessage("转账成功！");
+                  console.log("success");
+                  sendSignedTx(signedTx)
+                    .then((response) => {})
+                    .catch((err) => {});
+                }
+              })
+              .catch((err) => {
+                console.error("Error verifying transaction:", err);
+              })
+
           })
           .catch((error) => {
             console.error("Error signing transaction:", error);

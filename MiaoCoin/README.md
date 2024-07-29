@@ -187,6 +187,10 @@ TX状态变化： 钱包发起交易--> 节点上返回未签名的交易--> 钱
 
 池子挑选策略：很多。最简单先入先出
 
+
+
+防止多重支付：一个utxo只能在一次交易中作为输入。 不能说多次转账都使用同一个utxo
+
 # 三、网络服务
 
 节点相关
@@ -267,7 +271,13 @@ Transaction pool is a structure that contains all of the “unconfirmed transact
 
 # 密码
 
+https://nodejs.org/api/webcrypto.html#web-crypto-api
+
 web crypto api 不支持spec256k1曲线参数。
+
+
+
+secp256k1 vs p256
 
 
 

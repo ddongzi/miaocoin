@@ -1,4 +1,3 @@
-
 // MyCrypto
 class MyCrypto {
   static async hash(data) {
@@ -32,7 +31,42 @@ class MyCrypto {
       key,
       dataBuffer
     );
+
     return MyCrypto.bufferToHex(signature);
+  }
+  static async verify(data, signature,publicKey) {
+    // Convert the message to an ArrayBuffer
+    const encoder = new TextEncoder();
+    const dataBuffer = encoder.encode(data);
+
+    // Convert the PEM-formatted public key to ArrayBuffer
+    const keyData = MyCrypto.pemToBuffer(publicKey);
+
+    const publicKeyin = await crypto.subtle.importKey(
+      "spki",
+      keyData,
+      {
+        name: "ECDSA",
+        namedCurve: "P-256",
+      },
+      true,
+      ["verify"]
+    );
+
+    // Convert the signature from hex to ArrayBuffer
+    const signatureBuffer = MyCrypto.hexToArrayBuffer(signature);
+    // Verify the signature
+    const isValid = await crypto.subtle.verify(
+      {
+        name: "ECDSA",
+        hash: { name: "SHA-256" },
+      },
+      publicKeyin,
+      signatureBuffer,
+      dataBuffer
+    );
+    console.log(`Verify result: ${isValid}, data: ${data} , signature: ${signature}, pubkey: ${publicKey}`)
+    return isValid;
   }
 
   static async generateKeyPair() {
@@ -68,21 +102,21 @@ class MyCrypto {
     return arrayBuffer.buffer;
   }
   static async importPrivateKey(pem) {
-    const keyBuffer = MyCrypto.pemToBuffer(pem)
-    var importKey  =''
+    const keyBuffer = MyCrypto.pemToBuffer(pem);
+    var importKey = "";
     try {
-        importKey= await crypto.subtle.importKey(
-            "pkcs8",
-            keyBuffer,
-            {
-              name: "ECDSA",
-              namedCurve: "P-256",
-            },
-            true,
-            ["sign"]
-          );
+      importKey = await crypto.subtle.importKey(
+        "pkcs8",
+        keyBuffer,
+        {
+          name: "ECDSA",
+          namedCurve: "P-256",
+        },
+        true,
+        ["sign"]
+      );
     } catch (error) {
-        console.log(error)
+      console.log(error);
     }
     console.log("importKey result:", importKey);
     return importKey;
@@ -93,7 +127,6 @@ class MyCrypto {
     return MyCrypto.bufferToHex(keyBuffer);
   }
 
-  
   static pemToBuffer(pem) {
     const stripped = pem
       .replace(/-----BEGIN .*-----/, "")
@@ -118,26 +151,26 @@ class MyCrypto {
 
 // 使用示例
 (async () => {
-    // 生成散列
-    const hash = await MyCrypto.hash('Hello, world!');
-    console.log('Hash:', hash);
+  // 生成散列
+  const hash = await MyCrypto.hash("Hello, world!");
+  console.log("Hash:", hash);
 
-    // 生成随机ID
-    const randomId = MyCrypto.randomId();
-    console.log('Random ID:', randomId);
+  // 生成随机ID
+  const randomId = MyCrypto.randomId();
+  console.log("Random ID:", randomId);
 
-    // 生成密钥对
-    const { privateKey, publicKey } = await MyCrypto.generateKeyPair();
-    console.log('Private Key:', MyCrypto.pemToHex(privateKey));
-    console.log('Public Key:', publicKey);
+  // 生成密钥对
+  const { privateKey, publicKey } = await MyCrypto.generateKeyPair();
+  console.log("Private Key:", MyCrypto.pemToHex(privateKey));
+  console.log("Public Key:", publicKey);
 
-    // 签名数据
-    const signature = await MyCrypto.sign('Hello, world!', privateKey);
-    console.log('Signature:', signature);
+  // 签名数据
+  const signature = await MyCrypto.sign("Hello, world!", privateKey);
+  console.log("Signature:", signature);
 
-    // PEM转Hex
-    const hex = MyCrypto.pemToHex(privateKey);
-    console.log('PEM to Hex:', hex);
+  // PEM转Hex
+  const hex = MyCrypto.pemToHex(privateKey);
+  console.log("PEM to Hex:", hex);
 })();
 
 export default MyCrypto;

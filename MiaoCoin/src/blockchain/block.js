@@ -33,9 +33,8 @@ class Block{
         })
         return block;
     }
-    static caculateHash(index,timestamp,data,previoushash,difficulty,nouce) {
-        
-        return MiaoCrypto.hash(index + previoushash + timestamp +difficulty + nouce + JSON.stringify(this.data));
+    static async caculateHash(index,timestamp,data,previoushash,difficulty,nouce) {
+        return await MiaoCrypto.hash(index + previoushash + timestamp +difficulty + nouce + JSON.stringify(this.data));
 
     }
 }

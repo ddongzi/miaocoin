@@ -5,6 +5,7 @@ const BlockChain = require('../blockchain/blockchain')
 const {P2P} = require('./p2p')
 const cors = require('cors');
 const { Transaction } = require('../blockchain/transaction')
+const MiaoCrypto = require('../util/miaoCrypto')
 
 class HttpServer {
     constructor(port,node) {
@@ -82,9 +83,17 @@ class HttpServer {
         this.app.post('/sendSignedTx', (req, res) => {
             // 放到未确认交易
             const tx = req.body.tx
-            this.blockchain.updateTXhash(Transaction.fromJson(tx))
-            this.blockchain.addToTransactionPool(tx)
-            res.send(tx)
+            console.log(`received signed tx ${JSON.stringify(tx)}}`)
+            // 验签
+            
+            if (this.blockchain.verifySignTx(tx)) {
+                this.blockchain.updateTXhash(Transaction.fromJson(tx))
+                this.blockchain.addToTransactionPool(tx)
+                res.send(tx)
+            } else {
+                res.send({error: 'Invalid signature'})
+            }
+
         })
         this.app.post('/wallet',(req, res)=> {
             const address = req.body.address;

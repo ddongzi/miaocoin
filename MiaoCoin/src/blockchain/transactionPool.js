@@ -3,7 +3,7 @@ const Transactions = require("./transactions");
 class TransactionPool {
     constructor() {
         this.transactions = new Transactions()
-        this.maxSize = 3; // 最多3个未确认的交易
+        this.maxSize = 1; // 最多3个未确认的交易
     }
     add(transaction) {
         this.transactions.push(transaction)
