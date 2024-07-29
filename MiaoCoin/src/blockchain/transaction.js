@@ -112,6 +112,7 @@ class Transaction {
 
     t.inputs = [txIn];
     t.outputs = [new TxOutput(minerAddress, COINBASE_AMOUNT)];
+    // TODO ： 处理MiaoCrypto引起的异步
     t.id = Transaction.getTransactionId(t);
     // console.log(`Coinbase transaction created.... ${JSON.stringify(t)}`);
 
