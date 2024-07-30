@@ -7,21 +7,15 @@ const Transactions = require("../blockchain/transactions");
 const { info } = workerData;
 console.log(`[Worker Thread] Mine worker param : ${info.difficulty}`);
 // 通过挖矿产生区块
-function generateNextBlockWithMine(callback) {
-  const coinBaseTx = Transaction.generateConinBaseTransaction(
+async function generateNextBlockWithMine() {
+  const coinBaseTx = await Transaction.generateConinBaseTransaction(
     info.address,
     info.index
   );
   const txs = Transactions.fromJson(JSON.parse(info.txs));
   console.log(`Generating next block with ${JSON.stringify(coinBaseTx)} and ${JSON.stringify(txs)}`);
-  generateNextBlock([coinBaseTx].concat(txs))
-    .then((newBlock) => {
-      callback(null, newBlock);
-    })
-    .catch((err) => {
-      console.error(`[Worker Thread]generateNextBlock failed: ${err}`);
-      callback(err, null);
-    });
+  const newBlock = await generateNextBlock([coinBaseTx].concat(txs))
+  return newBlock
 }
 // 检测hash是否满足difficulty要求
 function hasMatchesDifficulty(hash, difficulty) {
@@ -78,10 +72,8 @@ function mine() {
   const now = new Date();
   console.log(`[Worker Thread] Miner is mining...`);
 
-  generateNextBlockWithMine((err, newBlock) => {
-    if (err) {
-      console.error("Error generating block:", err);
-    } else {
+  generateNextBlockWithMine().then(newBlock => {
+
       const finished = new Date();
       const timeDifference = finished.getTime() - now.getTime();
 
@@ -98,8 +90,9 @@ function mine() {
       setTimeout(() => {
         parentPort.postMessage({ type: "newBlock", newBlock });
       }, 1000 * 10);
-    }
-  });
+    }).catch((err) => {
+      console.error(`[Worker Thread] Mining error: ${err.message}`);
+    });
 }
 
 parentPort.on("message", (msg) => {

@@ -296,14 +296,14 @@ class BlockChain {
 
 
   // 通过一笔交易生成一个块:
-  generateNextBlockWithTransaction(senderAddress, receiverAdress, amount) {
+  async generateNextBlockWithTransaction(senderAddress, receiverAdress, amount) {
     console.log(
-      `Generating Next Block kWith Transaction.....${this.uTxouts.length}`
+      `Generating Next Block With Transaction.....${this.uTxouts.length}`
     );
     if (!Transaction.isValidAddress(address)) {
       console.error("Invalid address");
     }
-    const coinBaseTx = Transaction.generateConinBaseTransaction(
+    const coinBaseTx = await Transaction.generateConinBaseTransaction(
       this.node.miner.address,
       this.getLastBlock().index + 1
     );
@@ -318,7 +318,7 @@ class BlockChain {
     );
     this.updateUTxOutsFromTxs([tx]);
     const blockData = [coinBaseTx, tx];
-    const newBlock = this.generateNextBlock(blockData);
+    const newBlock = await this.generateNextBlock(blockData);
     return newBlock;
   }
   // 通过未确认交易池 生成一个块
@@ -456,7 +456,7 @@ class BlockChain {
   }
 
   // 生成一笔交易（未确认交易：不添加到区块链）：从senderAddress的余额中扣除amount给receiverAdress。
-  generateTxWithoutSign(senderAddress, receiverAdress, amount) {
+  async generateTxWithoutSign(senderAddress, receiverAdress, amount) {
     // console.log(`generate tx without sign... ===> ${senderAddress} send ${amount} to ${receiverAdress}`)
     const tx = new Transaction();
 
@@ -500,7 +500,7 @@ class BlockChain {
     }
     //console.log(`输出,  ${JSON.stringify(txOutputs)}`)
     tx.outputs = txOutputs;
-    tx.id = Transaction.getTransactionId(tx);
+    tx.id = await Transaction.getTransactionId(tx);
     tx.inputs = txInputs;
     // console.log(`generate tx without sign  finished. ${JSON.stringify(tx)}`);
 

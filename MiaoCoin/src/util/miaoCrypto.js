@@ -7,13 +7,14 @@ class MiaoCrypto {
    *
    * @param {string} data utf8 encoded
    * @param {AlgorithmIdentifier} algorithm
-   * @returns {Promise} resolves: {ArrayBuffer}
+   * @returns {Promise} resolves: {ArrayBuffer} hex encoded
    */
   static async hash(data, algorithm = "SHA-256") {
     const dataBuffer = MiaoCrypto.stringToArrayBuffer(data);
     const encoder = new TextEncoder();
-    const hash = await subtle.digest(algorithm, encoder.encode(dataBuffer));
-    return hash;
+    const hashBuffer = await subtle.digest(algorithm, encoder.encode(dataBuffer));
+
+    return hashBuffer;
   }
 
   static randomId() {
