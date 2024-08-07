@@ -13,7 +13,7 @@ async function generateNextBlockWithMine() {
     info.index
   );
   const txs = Transactions.fromJson(JSON.parse(info.txs));
-  console.log(`Generating next block with ${JSON.stringify(coinBaseTx)} and ${JSON.stringify(txs)}`);
+  console.log(`[Worker Thread] Generating next block with ${JSON.stringify(coinBaseTx)} and ${JSON.stringify(txs)}`);
   const newBlock = await generateNextBlock([coinBaseTx].concat(txs))
   return newBlock
 }
@@ -24,48 +24,47 @@ function hasMatchesDifficulty(hash, difficulty) {
   return hashBinary.startsWith(prefix);
 }
 // 生成一个区块
-function generateNextBlock(data) {
-  return new Promise(function (resolve, reject) {
-    var timestamp = new Date().toUTCString();
-    var hash = "";
-    let nouce = 0;
-    let batchSize = 1000;
-    function batchNouce() {
-      // 处理一批nouce
-      var newBlock = null;
-      for (let i = 0; i < batchSize; i++) {
-        hash = Block.caculateHash(
-          info.index,
-          timestamp,
-          data,
-          info.previousHash,
-          info.difficulty,
-          nouce
-        );
-        if (hasMatchesDifficulty(hash, info.difficulty)) {
-          newBlock = new Block(
-            info.index,
-            timestamp,
-            info.difficulty,
-            nouce,
-            data,
-            info.previousHash,
-            hash
-          );
-          break;
-        }
-        nouce++;
-      }
-      if (!newBlock) {
-        // 没找到，继续下一各batch
-
-        setImmediate(batchNouce);
-      } else {
-        resolve(newBlock);
-      }
+async function  generateNextBlock(data) {
+    return await batchNouce(data);
+}
+async function batchNouce(data) {
+  var timestamp = new Date().toUTCString();
+  var hash = "";
+  let nouce = 0;
+  let batchSize = 1000;
+  // 处理一批nouce
+  var newBlock = null;
+  for (let i = 0; i < batchSize; i++) {
+    hash = await Block.caculateHash(
+      info.index,
+      timestamp,
+      data,
+      info.previousHash,
+      info.difficulty,
+      nouce
+    );
+    // console.log(`[worker thread] hash ${hash}, nouce ${nouce}`);
+    if (hasMatchesDifficulty(hash, info.difficulty)) {
+      newBlock = new Block(
+        info.index,
+        timestamp,
+        info.difficulty,
+        nouce,
+        data,
+        info.previousHash,
+        hash
+      );
+      break;
     }
-    batchNouce();
-  });
+    nouce++;
+  }
+  if (!newBlock) {
+    // 没找到，继续下一各batch
+    console.log(`[Worker Thread] batch over`)
+    setImmediate(batchNouce);
+  } else {
+    return newBlock
+  }
 }
 
 function mine() {

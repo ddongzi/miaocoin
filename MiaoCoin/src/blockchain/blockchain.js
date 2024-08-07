@@ -16,7 +16,7 @@ const BLOCKS_FILE = "/blocks.json";
 const Transactions_FILE = "/transactions.json";
 const UTXOUTS_FILE = "/utxouts.json";
 
-const BLOCK_GENERATION_INTERNAL = 60 * 3; // 3 min 
+const BLOCK_GENERATION_INTERNAL = 60 * 3; // 3 min
 const DIFFICULTY_ADJUSTMENT_INTERVAL = 3; // 3 blocks
 
 const DATA_PATH = "/home/dong/JSCODE/MiaoCoin/data/blockchain";
@@ -35,43 +35,45 @@ class BlockChain {
     this.pool = new TransactionPool();
     // 事件发射
     this.emitter = new EventEmitter();
-    
-    this.init();
-
-    this.node = node;
 
     // 未签名的交易，等待客户签名了将其转化未 未确认的交易 （放入池中）
     this.unsignedTx = [];
+
+    this.node = node;
   }
 
   // 初始节点使用
-  init() {
-    // todo :容器初始化写死同一个创世区块 
+  // todo : 与构造器分离，异步初始化
+  async init() {
+    // todo :容器初始化写死同一个创世区块
     // TODO: 只有初始节点需要初始化，其他节点向peer同步
     console.log("#0 init blockchain..");
     // Create from genius block if blockchain is empty.
     if (this.blocks.length === 0) {
       console.log("Blockchain is empty, creating from genesis block");
-      this.blocks.push(this.createGeniusBlock());
-      this.blocksDb.write(this.blocks);
+      try {
+        const geniusBlock = await this.createGeniusBlock();
+        this.blocks.push(geniusBlock);
+        this.blocksDb.write(this.blocks);
+      } catch (error) {
+        console.error("Create genesis block error:", error);
+      }
     }
   }
- // 验证交易签名
- verifySignTx(tx) {
-    
+  // 验证交易签名
+  verifySignTx(tx) {
     let res = true;
     for (const txin of tx.inputs) {
-      const pubkeyObj = MiaoCrypto.importPublicKey(tx.publicKey)
-      const sigBuffer = MiaoCrypto.base64ToArrayBuffer(txin.signature)
-      const dataBuffer = MiaoCrypto.stringToArrayBuffer(tx.id)
-      if (!MiaoCrypto.verify(pubkeyObj, sigBuffer,dataBuffer)) {
+      const pubkeyObj = MiaoCrypto.importPublicKey(tx.publicKey);
+      const sigBuffer = MiaoCrypto.base64ToArrayBuffer(txin.signature);
+      const dataBuffer = MiaoCrypto.stringToArrayBuffer(tx.id);
+      if (!MiaoCrypto.verify(pubkeyObj, sigBuffer, dataBuffer)) {
         res = false;
         console.log(`Invalid sign for tx ${tx.id}`);
         break; // 退出循环
       }
     }
     return res;
-    
   }
 
   updateTXhash(tx) {
@@ -101,8 +103,10 @@ class BlockChain {
   // 从同步数据utxouts更新
   updateUTXouts(utxOuts) {
     console.log(`update utxouts ...`);
-    if (MiaoCrypto.hash(JSON.stringify(utxOuts)) === 
-      MiaoCrypto.hash(JSON.stringify(this.uTxouts))) {
+    if (
+      MiaoCrypto.hash(JSON.stringify(utxOuts)) ===
+      MiaoCrypto.hash(JSON.stringify(this.uTxouts))
+    ) {
       console.log(`no need to update.`);
       return;
     }
@@ -120,7 +124,7 @@ class BlockChain {
 
     // todo : 同步逻辑。 最长链原则， ??
     const needUpdate = this.updateBlocks(syncMsg.blocks);
-    if (needUpdate) { 
+    if (needUpdate) {
       // 与块上数据保持一致
       this.updateUTXouts(syncMsg.utxouts);
     }
@@ -138,7 +142,7 @@ class BlockChain {
     return this.getLastBlock().difficulty;
   }
   getAdjustedDifficulty() {
-    console.log(`difficulty adjusted.`)
+    console.log(`difficulty adjusted.`);
     const prevAdjustedBlock =
       this.blocks[this.blocks.length - DIFFICULTY_ADJUSTMENT_INTERVAL];
     const timeExpected =
@@ -164,14 +168,14 @@ class BlockChain {
   // 生成一个块 并加入链上
 
   // 链上创世区块
-  createGeniusBlock() {
+  async createGeniusBlock() {
     let index = 0;
     let timestamp = new Date().toUTCString();
     let difficulty = 5;
     let nouce = 0;
     let data = "Genesis Block";
     let previoushash = "0000000000000000";
-    let hash = Block.caculateHash(
+    let hash = await Block.caculateHash(
       index,
       timestamp,
       data,
@@ -188,8 +192,8 @@ class BlockChain {
       previoushash,
       hash
     );
-    console.log(`Created genius block ${newBlock}`)
-    return newBlock
+    console.log(`Created genius block ${newBlock}`);
+    return newBlock;
   }
 
   isValidBlockStructure(block) {
@@ -222,7 +226,7 @@ class BlockChain {
   }
   // 将一个block加入链
   addBlock(newBlock) {
-    console.log(`add block ${newBlock.index}`)
+    console.log(`add block ${newBlock.index}`);
     if (this.checkBlock(newBlock, this.getLastBlock())) {
       // console.log(`adding block ${JSON.stringify(newBlock)}`)
 
@@ -230,22 +234,27 @@ class BlockChain {
       this.blocksDb.write(this.blocks);
 
       console.info(`Blockchain  added Block#${newBlock.index}`);
-      return true
+      return true;
     }
-    console.log(`addblock checkblock failed`)
-    return false
+    console.log(`addblock checkblock failed`);
+    return false;
   }
   // 检查新来的区块是否符合要求
+  /**
+   * 
+   * @param {Block} newBlock 
+   * @param {Block} previousBlock 
+   * @returns {boolean} 
+   */
   checkBlock(newBlock, previousBlock) {
+    console.log(`checking block...`);
 
-    console.log(`checking block...`)
-  
     if (!previousBlock) {
       // 前面区块不存在：说明 链相差至少2个块，放弃此次添加，等待同步
       console.error(`Check block failed: previous block not exist`);
       return false;
     }
-    console.log(`checking phrase1 succeed...`)
+    console.log(`checking phrase1 succeed...`);
 
     if (previousBlock.index + 1 !== newBlock.index) {
       console.error(
@@ -255,20 +264,23 @@ class BlockChain {
       );
       return false;
     }
-    console.log(`checking phrase2 succeed...`)
-    
-    if (previousBlock.toHash() !== newBlock.previoushash) {
+    console.log(`checking phrase2 succeed...`);
+    if (previousBlock.hash !== newBlock.previoushash) {
       console.error(
-        `Invalid previous hash, expected:${previousBlock.toHash()} ,got: ${
+        `Invalid previous hash, expected:${previousBlock.hash} ,got: ${
           newBlock.previoushash
         },`
       );
       return false;
     }
-    console.log(`checking phrase3 succeed...`)
+    console.log(`checking phrase3 succeed...`);
 
     if (newBlock.toHash() !== newBlock.hash) {
-      console.error(`newBlock hash failed, expected ${newBlock.hash}, got ${newBlock.toHash()}`)
+      console.error(
+        `newBlock hash failed, expected ${
+          newBlock.hash
+        }, got ${newBlock.toHash()}`
+      );
       return false;
     }
     console.log(`check block succeeded.`);
@@ -294,9 +306,12 @@ class BlockChain {
     }
   }
 
-
   // 通过一笔交易生成一个块:
-  async generateNextBlockWithTransaction(senderAddress, receiverAdress, amount) {
+  async generateNextBlockWithTransaction(
+    senderAddress,
+    receiverAdress,
+    amount
+  ) {
     console.log(
       `Generating Next Block With Transaction.....${this.uTxouts.length}`
     );
@@ -323,7 +338,7 @@ class BlockChain {
   }
   // 通过未确认交易池 生成一个块
   generateNextBlockWithPool() {
-    this.node.miner.startMining()
+    this.node.miner.startMining();
   }
 
   // 生成一笔交易 放入池子
@@ -358,13 +373,12 @@ class BlockChain {
       .reduce((a, b) => a.concat(b), [])
       .map((txin) => new UTxOutput(txin.txOutId, txin.txOutIndex, "", 0));
 
-    var resultingUnspentTxOuts = this.uTxouts
-      .filter((utxout) => 
+    var resultingUnspentTxOuts = this.uTxouts.filter(
+      (utxout) =>
         !consumedTxOutputs.find(
           (t) =>
             t.txOutId === utxout.txOutId && t.txOutIndex === utxout.txOutIndex
         )
-      
     );
     // console.log(`After filter: ${JSON.stringify(resultingUnspentTxOuts)}`);
     resultingUnspentTxOuts = resultingUnspentTxOuts.concat(newUnspentTxOutputs);
@@ -392,17 +406,17 @@ class BlockChain {
   // 尝试将tx加入池子
   addToTransactionPool(tx) {
     if (this.isValidTxForPool(tx)) {
-      this.pool.add(tx)
-      console.log(`add unconfirmed tx to pool successfully.`)
+      this.pool.add(tx);
+      console.log(`add unconfirmed tx to pool successfully.`);
 
       if (this.pool.isFull()) {
         // 触发创建区块
-        console.log(`Pool is full, ready to generate next block.`)
-        this.generateNextBlockWithPool()
+        console.log(`Pool is full, ready to generate next block.`);
+        this.generateNextBlockWithPool();
       }
       return tx;
     }
-    console.log(`add unconfirmed tx to pool failed.`)
+    console.log(`add unconfirmed tx to pool failed.`);
     return { tx: "error" };
   }
 
@@ -506,18 +520,19 @@ class BlockChain {
 
     return tx;
   }
- 
+
   // 返回区块链同步信息
   getBlockchainSyncData() {
     console.log(`return blockchain sync data.... `);
     // 获取所有对等节点的 URL，并去重
-    let peers =[]
+    let peers = [];
     for (let url of this.node.p2p.peers.keys()) {
-      if (url) { // 过滤掉 undefined 或 null 的 URL
+      if (url) {
+        // 过滤掉 undefined 或 null 的 URL
         peers.push(url);
       }
     }
-    peers.push(this.node.p2p.wsurl)
+    peers.push(this.node.p2p.wsurl);
     peers = Array.from(new Set(peers));
 
     return {
@@ -530,7 +545,6 @@ class BlockChain {
       },
     };
   }
-
 
   // 收到其他节点的 新区块
   receiveNewBlock(newBlock) {
@@ -547,17 +561,17 @@ class BlockChain {
     const added = this.addBlock(newBlock);
     if (added) {
       // 从新区块更新utxouts
-      this.updateUTxOutsFromTxs(newBlock.data)
+      this.updateUTxOutsFromTxs(newBlock.data);
     }
-    console.log(`receiveNewBlock Successfully`)
+    console.log(`receiveNewBlock Successfully`);
     // 广播同步: 你们要来找我同步了
     this.node.p2p.broadcast({
-      'type': MessageType.NOTIFY_SYNC,
-      'description' :'notify you sync from me',
-      'data':{
-        'wsurl':this.node.p2p.wsurl
-      }
-    })
+      type: MessageType.NOTIFY_SYNC,
+      description: "notify you sync from me",
+      data: {
+        wsurl: this.node.p2p.wsurl,
+      },
+    });
     return true;
   }
 }

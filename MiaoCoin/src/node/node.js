@@ -36,8 +36,8 @@ class Node {
   }
 
   // 初始化矿工
-  initMiner() {
-    this.miner = new Miner(this);
+  async initMiner() {
+    this.miner = await Miner.create(this);
   }
 
   broadCastTransactionPool() {

@@ -13,12 +13,21 @@ const role = process.env.ROLE || 'ROOT';
 const dataPath = './data';
 
 
-// 创建初始节点： 
-const node = new Node();
-const p2p = new P2P(p2pPort, node);
-const http = new HttpServer(httpPort, node);
-node.initNetwork(p2p, http);
-node.initMiner()
+(async() => {
+    try {
+        // 创建初始节点： 
+        const node = new Node();
+        await node.blockchain.init()
+        const p2p = new P2P(p2pPort, node);
+        const http = new HttpServer(httpPort, node);
+        node.initNetwork(p2p, http);
+        await node.initMiner()
 
-// 预置一个区块，矿工有钱
-node.miner.startMining()
+        // 预置一个区块，矿工有钱
+        node.miner.startMining()
+    } catch (e) {
+        console.error("Error:", e);
+    }
+
+})();
+

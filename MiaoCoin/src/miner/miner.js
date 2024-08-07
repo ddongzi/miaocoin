@@ -16,8 +16,11 @@ const PRIVATE_KEY_FILE = "/privatekey.pem";
 const PUBLIC_KEY_FILE = "/publickey.pem";
 
 class Miner {
-  constructor(node) {
-    this.loadKeys();
+  constructor(node, privateKey, publicKey) {
+    this.privateKey = privateKey;
+    this.publicKey = publicKey;
+    this.address = publicKey
+
     this.node = node;
     this.blockchain = node.blockchain;
     this.worker = null; // 挖矿线程
@@ -97,21 +100,27 @@ class Miner {
   }
 
   // 初始化加载 矿工密钥
-  loadKeys() {
+  static async loadKeys() {
     // 读取私钥和公钥
     const privateKeyPath = DATA_PATH + PRIVATE_KEY_FILE;
     const publicKeyPath = DATA_PATH + PUBLIC_KEY_FILE;
     if (!existsSync(publicKeyPath) || !existsSync(privateKeyPath)) {
-      const { privateKey, publicKey } = MiaoCrypto.generateKeyPair();
-      const publicKeyPem = MiaoCrypto.exportPublicKey(publicKey)
-      const privateKeyPem = MiaoCrypto.exportPrivateKey(privateKey)
+      const { privateKey, publicKey } = await MiaoCrypto.generateKeyPair();
+      const publicKeyPem = await MiaoCrypto.exportPublicKey(publicKey)
+      const privateKeyPem = await MiaoCrypto.exportPrivateKey(privateKey)
       writeFileSync(publicKeyPath, publicKeyPem);
       writeFileSync(privateKeyPath, privateKeyPem);
     }
-    this.privateKey = MiaoCrypto.pemToHex(readFileSync(privateKeyPath, "utf8"));
-    this.publicKey = MiaoCrypto.pemToHex(readFileSync(publicKeyPath, "utf8"));
-    this.address = this.publicKey;
-    console.log(`Miner loaded keys, address: ${this.address}`);
+    const privateKey = MiaoCrypto.pemToHex(readFileSync(privateKeyPath, "utf8"));
+    const publicKey = MiaoCrypto.pemToHex(readFileSync(publicKeyPath, "utf8"));
+    return {privateKey, publicKey}
+  }
+
+  static async create(node) {
+    const {privateKey, publicKey} = await Miner.loadKeys()
+    const miner = new Miner(node,privateKey,publicKey);
+    console.log(`creating miner successfully.`);
+    return miner;
   }
 }
 

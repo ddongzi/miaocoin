@@ -13,9 +13,9 @@ class Block{
         this.nouce = nouce
         // console.log(`Block constructor ${JSON.stringify(this)}`);
     }
-    toHash() {
+    async toHash() {
 
-        return Block.caculateHash(this.index, this.timestamp,this.data,
+        return await Block.caculateHash(this.index, this.timestamp,this.data,
             this.previoushash, this.difficulty, this.nouce
         )
     }
@@ -33,9 +33,20 @@ class Block{
         })
         return block;
     }
+    /**
+     * 
+     * @param {*} index 
+     * @param {*} timestamp 
+     * @param {*} data 
+     * @param {*} previoushash 
+     * @param {*} difficulty 
+     * @param {*} nouce 
+     * @returns {string} hex encoded string
+     */
     static async caculateHash(index,timestamp,data,previoushash,difficulty,nouce) {
-        return await MiaoCrypto.hash(index + previoushash + timestamp +difficulty + nouce + JSON.stringify(this.data));
-
+        // console.log(`caculateHash ${index + previoushash + timestamp +difficulty + nouce + JSON.stringify(data)}`)
+        const hashBuffer = await MiaoCrypto.hash(index + previoushash + timestamp +difficulty + nouce + JSON.stringify(data));
+        return MiaoCrypto.arrayBufferToHex(hashBuffer)
     }
 }
 module.exports = Block;

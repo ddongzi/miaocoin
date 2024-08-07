@@ -10,9 +10,9 @@ class MiaoCrypto {
    * @returns {Promise} resolves: {ArrayBuffer} hex encoded
    */
   static async hash(data, algorithm = "SHA-256") {
+    // console.log(`[MiaoCrypto] hashing data : ${data} `)
     const dataBuffer = MiaoCrypto.stringToArrayBuffer(data);
-    const encoder = new TextEncoder();
-    const hashBuffer = await subtle.digest(algorithm, encoder.encode(dataBuffer));
+    const hashBuffer = await subtle.digest(algorithm, dataBuffer);
 
     return hashBuffer;
   }
@@ -55,7 +55,7 @@ class MiaoCrypto {
   }
   /**
    *
-   * @returns {Object}
+   * @returns {Promise}
    * @returns {CryptoKey} Object.privateKey {CryptoKey}
    * @returns {CryptoKey} Object.publicKey {CryptoKey}
    */
