@@ -184,7 +184,7 @@ function Wallet() {
           });
 
         setTransactionId(response.data.id); // 假设 API 返回交易ID
-        setAmount("");
+        setAmount(0);
         setReceiver("");
         setTransferLoading(false);
       })
@@ -276,13 +276,14 @@ function Wallet() {
           </Box>
           <div>
             <Typography variant="h6">钱包余额: {balance} coin</Typography>
-
+            <Typography variant="h8"   style={{ wordBreak: 'break-all', whiteSpace: 'normal' }}
+            >地址：{address}</Typography>
             <Box my={2}>
               <TextField
                 label="金额"
                 type="number"
                 value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                onChange={(e) => setAmount(Number(e.target.value))}
                 fullWidth
                 margin="normal"
               />

@@ -311,7 +311,7 @@ class BlockChain {
   }
 
   // 通过一笔交易生成一个块:
-  async generateNextBlockWithTransaction(
+   generateNextBlockWithTransaction(
     senderAddress,
     receiverAdress,
     amount
@@ -363,7 +363,7 @@ class BlockChain {
 
   // 新的交易来更新 utxOuts
   updateUTxOutsFromTxs(transactions) {
-    console.log(`[BLOCKCHAIN] update utxouts from txs ... `);
+    console.log(`[BLOCKCHAIN] update utxouts from  new txs ... ${JSON.stringify(transactions)} `);
     const newUnspentTxOutputs = transactions
       .map((t) => {
         return t.outputs.map(
@@ -387,16 +387,16 @@ class BlockChain {
     // console.log(`After filter: ${JSON.stringify(resultingUnspentTxOuts)}`);
     resultingUnspentTxOuts = resultingUnspentTxOuts.concat(newUnspentTxOutputs);
 
-    // console.log(
-    //   `newUnspentTxOutputs: ${JSON.stringify(
-    //     newUnspentTxOutputs
-    //   )}\n consumedTxOutputs: ${JSON.stringify(consumedTxOutputs)}`
-    // );
-    // console.log(
-    //   `Old uxOutputs: ${JSON.stringify(
-    //     this.uTxouts
-    //   )}\n New uxOutputs: ${JSON.stringify(resultingUnspentTxOuts)}`
-    // );
+    console.log(
+      `newUnspentTxOutputs: ${JSON.stringify(
+        newUnspentTxOutputs
+      )}\n consumedTxOutputs: ${JSON.stringify(consumedTxOutputs)}`
+    );
+    console.log(
+      `Old uxOutputs: ${JSON.stringify(
+        this.uTxouts
+      )}\n New uxOutputs: ${JSON.stringify(resultingUnspentTxOuts)}`
+    );
     this.uTxouts = resultingUnspentTxOuts;
     this.uTxoutsDb.write(this.uTxouts);
   }
@@ -439,7 +439,7 @@ class BlockChain {
         }
       });
     });
-    console.log(`check valid tx for pool ${res}`);
+    console.log(`[Blockchain] check valid tx for pool ${res}`);
     return res;
   }
   getBlockByHash(hash) {
@@ -551,7 +551,7 @@ class BlockChain {
   }
 
   // 收到其他节点的 新区块
-  async receiveNewBlock(newBlock) {
+   receiveNewBlock(newBlock) {
     console.log(`receive new block.... ${JSON.stringify(newBlock)}`);
     // 1. 验证新区块是否合法
     // 2. 验证新区块是否是上一个区块的后续区块
