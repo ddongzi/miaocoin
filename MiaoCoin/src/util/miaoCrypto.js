@@ -54,6 +54,7 @@ class MiaoCrypto {
    * @returns
    */
   static verify(publicKey, signature, data) {
+    
     const verifier = createVerify("SHA256");
     verifier.update(data).end(); // 提供验证数据并结束输入
     return verifier.verify(publicKey, signature, "hex");

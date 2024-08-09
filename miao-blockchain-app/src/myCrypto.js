@@ -15,10 +15,10 @@ class MyCrypto {
 
   // private key pem
   /**
-   * 
-   * @param {*} data 
-   * @param {} privateKey 
-   * @returns {string} hex encoded string
+   *
+   * @param {*} data
+   * @param {} privateKey
+   * @returns {string} der hex string
    */
   static async sign(data, privateKey) {
     const encoder = new TextEncoder();
@@ -26,7 +26,7 @@ class MyCrypto {
 
     const key = await MyCrypto.importPrivateKey(privateKey);
 
-    const signature = await crypto.subtle.sign(
+    var signature = await crypto.subtle.sign(
       {
         name: "ECDSA",
         hash: { name: "SHA-256" },
@@ -34,10 +34,11 @@ class MyCrypto {
       key,
       dataBuffer
     );
-
-    return MyCrypto.bufferToHex(signature);
+    signature = MyCrypto.convertP1363ToDER(signature);
+    signature = MyCrypto.bufferToHex(signature);
+    return signature;
   }
-  static async verify(data, signature,publicKey) {
+  static async verify(data, signature, publicKey) {
     // Convert the message to an ArrayBuffer
     const encoder = new TextEncoder();
     const dataBuffer = encoder.encode(data);
@@ -57,7 +58,8 @@ class MyCrypto {
     );
 
     // Convert the signature from hex to ArrayBuffer
-    const signatureBuffer = MyCrypto.hexToArrayBuffer(signature);
+    var signatureBuffer = MyCrypto.hexToArrayBuffer(signature);
+    signatureBuffer = MyCrypto.convertDERToP1363(signatureBuffer)
     // Verify the signature
     const isValid = await crypto.subtle.verify(
       {
@@ -139,28 +141,85 @@ class MyCrypto {
     return Uint8Array.from(atob(stripped), (c) => c.charCodeAt(0));
   }
 
-
   /**
-   * 
-   * @param {ArrayBuffer} buffer 
+   *
+   * @param {ArrayBuffer} buffer
    * @returns {string} hex encoded string
    */
   static bufferToHex(buffer) {
     const byteArray = new Uint8Array(buffer);
     const hexParts = [];
 
-    byteArray.forEach(byte => {
-        const hex = byte.toString(16).padStart(2, '0');
-        hexParts.push(hex);
+    byteArray.forEach((byte) => {
+      const hex = byte.toString(16).padStart(2, "0");
+      hexParts.push(hex);
     });
 
-    return hexParts.join('');
+    return hexParts.join("");
   }
 
   static bufferToPem(buffer, label) {
     const base64String = btoa(String.fromCharCode(...new Uint8Array(buffer)));
     const pemString = `-----BEGIN ${label}-----\n${base64String}\n-----END ${label}-----`;
     return pemString;
+  }
+
+  /**
+   * P-256 IEEE P1363 格式 签名转换
+   * @param {Buffer} p1363Signature
+   * @returns {Uint8Array} 
+   */
+  static convertP1363ToDER(p1363Signature) {
+    const p1363Array = new Uint8Array(p1363Signature);
+    const r = p1363Array.slice(0, p1363Array.length / 2);
+    const s = p1363Array.slice(p1363Array.length / 2);
+
+    const rDer = MyCrypto.integerToDER(r);
+    const sDer = MyCrypto.integerToDER(s);
+
+    // DER encoded SEQUENCE: 0x30 + length of rDer + sDer + rDer + sDer
+    const derSignature = new Uint8Array([
+      0x30,
+      rDer.length + sDer.length,
+      ...rDer,
+      ...sDer,
+    ]);
+
+    // console.log(`before : ${p1363Signature} , after : ${derSignature}`);
+    return derSignature;
+  }
+
+  static integerToDER(integerArray) {
+    // Remove leading zeros
+    let i = 0;
+    while (i < integerArray.length && integerArray[i] === 0) i++;
+    const integer = integerArray.slice(i);
+
+    // If the first byte >= 0x80, prepend 0x00 to indicate positive number
+    if (integer[0] >= 0x80) {
+      return new Uint8Array([0x02, integer.length + 1, 0x00, ...integer]);
+    }
+    return new Uint8Array([0x02, integer.length, ...integer]);
+  }
+
+  static convertDERToP1363(derSignature) {
+    const derArray = new Uint8Array(derSignature);
+
+    if (derArray[0] !== 0x30) throw new Error("Invalid DER signature format");
+
+    let offset = 2; // 跳过 SEQUENCE 和长度
+    const rLen = derArray[offset + 1];
+    const r = derArray.slice(offset + 2, offset + 2 + rLen);
+    offset += 2 + rLen;
+
+    const sLen = derArray[offset + 1];
+    const s = derArray.slice(offset + 2, offset + 2 + sLen);
+
+    const p1363Signature = new Uint8Array(64);
+    p1363Signature.set(r, 32 - r.length);
+    p1363Signature.set(s, 64 - s.length);
+
+    return p1363Signature;
   }
 }
 

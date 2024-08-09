@@ -127,7 +127,8 @@ function Wallet() {
     tx.inputs = await Promise.all(
       tx.inputs.map(async (txin, index) => {
         // console.log(`sign txin ${index}`);
-        txin.signature =  await MyCrypto.sign(tx.id, privateKey);
+        txin.signature = await MyCrypto.sign(tx.id, privateKey);
+
         console.log(
           `signed txin ${index}, data ${tx.id} with signature ${
             txin.signature
@@ -172,19 +173,11 @@ function Wallet() {
         console.log("transfer res ", response.data);
         signTx(response.data)
           .then((signedTx) => {
-            verifyTx(signedTx)
-              .then((isvalid) => {
-                if (isvalid) {
-                  setSuccessMessage("转账成功！");
-                  console.log("success");
-                  sendSignedTx(signedTx)
-                    .then((response) => {})
-                    .catch((err) => {});
-                }
-              })
-              .catch((err) => {
-                console.error("Error verifying transaction:", err);
-              });
+            setSuccessMessage("转账成功！");
+            console.log("success");
+            sendSignedTx(signedTx)
+              .then((response) => {})
+              .catch((err) => {});
           })
           .catch((error) => {
             console.error("Error signing transaction:", error);
