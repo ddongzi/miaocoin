@@ -5,6 +5,7 @@ const HttpServer = require("./net/httpServer");
 const { P2P } = require("./net/p2p");
 
 const { Worker } = require('worker_threads');
+const { Console } = require("console");
 
 const httpPort = process.env.HTTP_PORT || 3000;
 const p2pPort = process.env.P2P_PORT || 4000;
@@ -13,16 +14,15 @@ const role = process.env.ROLE || 'ROOT';
 const dataPath = './data';
 
 
-(async() => {
+(() => {
     try {
         // 创建初始节点： 
         const node = new Node();
-        await node.blockchain.init()
+        node.blockchain.init()
         const p2p = new P2P(p2pPort, node);
         const http = new HttpServer(httpPort, node);
         node.initNetwork(p2p, http);
-        await node.initMiner()
-
+        node.initMiner()
         // 预置一个区块，矿工有钱
         node.miner.startMining()
     } catch (e) {

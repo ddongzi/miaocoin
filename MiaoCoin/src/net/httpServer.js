@@ -49,8 +49,8 @@ class HttpServer {
 
         })
         // 
-        this.app.get('/mineBlock', async(req, res) => {
-            const newBlock = await blockchain.generateNextBlock('test')
+        this.app.get('/mineBlock', (req, res) => {
+            const newBlock =  blockchain.generateNextBlock('test')
             res.send(newBlock) 
         })
         this.app.get('/peers', (req,res) => {
@@ -62,22 +62,22 @@ class HttpServer {
             this.p2p.connectPeer(peer)
             res.send('Connected to peer')
         })
-        this.app.post('/mineTransactionWithTransfer', async (req,res) => {
+        this.app.post('/mineTransactionWithTransfer',  (req,res) => {
             const senderAddress = req.body.senderAddress;
             const recipientAddress = req.body.recipientAddress;
             const amount = req.body.amount;
-            const resp = await this.blockchain.generateNextBlockWithTransaction(senderAddress,recipientAddress, amount);
+            const resp =  this.blockchain.generateNextBlockWithTransaction(senderAddress,recipientAddress, amount);
             res.send(resp); 
         })
         this.app.get('/mineTransactionWithPool', (req,res) => {
             const resp = this.blockchain.generateNextBlockWithPool();
             res.send(resp);
         })
-        this.app.post('/createTransaction',async (req,res) => {
+        this.app.post('/createTransaction', (req,res) => {
             const sender = req.body.sender;
             const receiver = req.body.receiver;
             const amount = req.body.amount;
-            const tx = await this.blockchain.generateTxWithoutSign(sender,receiver,amount);
+            const tx =  this.blockchain.generateTxWithoutSign(sender,receiver,amount);
             res.send(tx) 
         })
         this.app.post('/sendSignedTx', (req, res) => {

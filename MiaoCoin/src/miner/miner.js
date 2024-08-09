@@ -19,7 +19,7 @@ class Miner {
   constructor(node, privateKey, publicKey) {
     this.privateKey = privateKey;
     this.publicKey = publicKey;
-    this.address = publicKey
+    this.address = MiaoCrypto.hash(this.publicKey)
 
     this.node = node;
     this.blockchain = node.blockchain;
@@ -53,7 +53,7 @@ class Miner {
     // 接受worker线程消息
     this.worker.on("message", (msg) => {
       if (msg.type === "newBlock") {
-        console.log(`New block mined: ${JSON.stringify(msg.newBlock)}`);
+        console.log(`[Miner] New block mined: ${JSON.stringify(msg.newBlock)}`);
         // 添加到链上， 更新utxouts
         const newBlock = Block.fromJson(msg.newBlock)
         const added = this.blockchain.addBlock(newBlock);
@@ -100,24 +100,23 @@ class Miner {
   }
 
   // 初始化加载 矿工密钥
-  static async loadKeys() {
+  static  loadKeys() {
     // 读取私钥和公钥
     const privateKeyPath = DATA_PATH + PRIVATE_KEY_FILE;
     const publicKeyPath = DATA_PATH + PUBLIC_KEY_FILE;
     if (!existsSync(publicKeyPath) || !existsSync(privateKeyPath)) {
-      const { privateKey, publicKey } = await MiaoCrypto.generateKeyPair();
-      const publicKeyPem = await MiaoCrypto.exportPublicKey(publicKey)
-      const privateKeyPem = await MiaoCrypto.exportPrivateKey(privateKey)
-      writeFileSync(publicKeyPath, publicKeyPem);
-      writeFileSync(privateKeyPath, privateKeyPem);
+      const { privateKey, publicKey } =  MiaoCrypto.generateKeyPair();
+      writeFileSync(publicKeyPath, publicKey);
+      writeFileSync(privateKeyPath, privateKey);
     }
-    const privateKey = MiaoCrypto.pemToHex(readFileSync(privateKeyPath, "utf8"));
-    const publicKey = MiaoCrypto.pemToHex(readFileSync(publicKeyPath, "utf8"));
+    const privateKey = readFileSync(privateKeyPath, "utf8");
+    const publicKey = readFileSync(publicKeyPath, "utf8");
     return {privateKey, publicKey}
   }
 
-  static async create(node) {
-    const {privateKey, publicKey} = await Miner.loadKeys()
+  static  create(node) {
+    const {privateKey, publicKey} =  Miner.loadKeys()
+
     const miner = new Miner(node,privateKey,publicKey);
     console.log(`creating miner successfully.`);
     return miner;

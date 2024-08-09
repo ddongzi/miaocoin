@@ -14,14 +14,17 @@ class MyCrypto {
   }
 
   // private key pem
+  /**
+   * 
+   * @param {*} data 
+   * @param {} privateKey 
+   * @returns {string} hex encoded string
+   */
   static async sign(data, privateKey) {
     const encoder = new TextEncoder();
-    console.log(`sign 1`);
     const dataBuffer = encoder.encode(data);
-    console.log(`sign 2`);
 
     const key = await MyCrypto.importPrivateKey(privateKey);
-    console.log(`sign 3`);
 
     const signature = await crypto.subtle.sign(
       {
@@ -65,7 +68,7 @@ class MyCrypto {
       signatureBuffer,
       dataBuffer
     );
-    console.log(`Verify result: ${isValid}, data: ${data} , signature: ${signature}, pubkey: ${publicKey}`)
+    // console.log(`Verify result: ${isValid}, data: ${data} , signature: ${signature}, pubkey: ${publicKey}`)
     return isValid;
   }
 
@@ -136,10 +139,22 @@ class MyCrypto {
     return Uint8Array.from(atob(stripped), (c) => c.charCodeAt(0));
   }
 
+
+  /**
+   * 
+   * @param {ArrayBuffer} buffer 
+   * @returns {string} hex encoded string
+   */
   static bufferToHex(buffer) {
-    return Array.prototype.map
-      .call(new Uint8Array(buffer), (x) => ("00" + x.toString(16)).slice(-2))
-      .join("");
+    const byteArray = new Uint8Array(buffer);
+    const hexParts = [];
+
+    byteArray.forEach(byte => {
+        const hex = byte.toString(16).padStart(2, '0');
+        hexParts.push(hex);
+    });
+
+    return hexParts.join('');
   }
 
   static bufferToPem(buffer, label) {
@@ -150,27 +165,27 @@ class MyCrypto {
 }
 
 // 使用示例
-(async () => {
-  // 生成散列
-  const hash = await MyCrypto.hash("Hello, world!");
-  console.log("Hash:", hash);
+// (async () => {
+//   // 生成散列
+//   const hash = await MyCrypto.hash("Hello, world!");
+//   console.log("Hash:", hash);
 
-  // 生成随机ID
-  const randomId = MyCrypto.randomId();
-  console.log("Random ID:", randomId);
+//   // 生成随机ID
+//   const randomId = MyCrypto.randomId();
+//   console.log("Random ID:", randomId);
 
-  // 生成密钥对
-  const { privateKey, publicKey } = await MyCrypto.generateKeyPair();
-  console.log("Private Key:", MyCrypto.pemToHex(privateKey));
-  console.log("Public Key:", publicKey);
+//   // 生成密钥对
+//   const { privateKey, publicKey } = await MyCrypto.generateKeyPair();
+//   console.log("Private Key:", MyCrypto.pemToHex(privateKey));
+//   console.log("Public Key:", publicKey);
 
-  // 签名数据
-  const signature = await MyCrypto.sign("Hello, world!", privateKey);
-  console.log("Signature:", signature);
+//   // 签名数据
+//   const signature = await MyCrypto.sign("Hello, world!", privateKey);
+//   console.log("Signature:", signature);
 
-  // PEM转Hex
-  const hex = MyCrypto.pemToHex(privateKey);
-  console.log("PEM to Hex:", hex);
-})();
+//   // PEM转Hex
+//   const hex = MyCrypto.pemToHex(privateKey);
+//   console.log("PEM to Hex:", hex);
+// })();
 
 export default MyCrypto;

@@ -5,17 +5,21 @@ const hexToBinary = require("../util/util");
 const Transactions = require("../blockchain/transactions");
 
 const { info } = workerData;
-console.log(`[Worker Thread] Mine worker param : ${info.difficulty}`);
+console.log(`[Worker Thread] Mine worker param : ${JSON.stringify(info)}`);
 // 通过挖矿产生区块
-async function generateNextBlockWithMine() {
-  const coinBaseTx = await Transaction.generateConinBaseTransaction(
+function generateNextBlockWithMine() {
+  const coinBaseTx = Transaction.generateConinBaseTransaction(
     info.address,
     info.index
   );
   const txs = Transactions.fromJson(JSON.parse(info.txs));
-  console.log(`[Worker Thread] Generating next block with ${JSON.stringify(coinBaseTx)} and ${JSON.stringify(txs)}`);
-  const newBlock = await generateNextBlock([coinBaseTx].concat(txs))
-  return newBlock
+  console.log(
+    `[Worker Thread] Generating next block with ${JSON.stringify(
+      coinBaseTx
+    )} and ${JSON.stringify(txs)}`
+  );
+  const newBlock = generateNextBlock([coinBaseTx].concat(txs));
+  return newBlock;
 }
 // 检测hash是否满足difficulty要求
 function hasMatchesDifficulty(hash, difficulty) {
@@ -24,10 +28,10 @@ function hasMatchesDifficulty(hash, difficulty) {
   return hashBinary.startsWith(prefix);
 }
 // 生成一个区块
-async function  generateNextBlock(data) {
-    return await batchNouce(data);
+function generateNextBlock(data) {
+  return batchNouce(data);
 }
-async function batchNouce(data) {
+function batchNouce(data) {
   var timestamp = new Date().toUTCString();
   var hash = "";
   let nouce = 0;
@@ -35,7 +39,7 @@ async function batchNouce(data) {
   // 处理一批nouce
   var newBlock = null;
   for (let i = 0; i < batchSize; i++) {
-    hash = await Block.caculateHash(
+    hash = Block.caculateHash(
       info.index,
       timestamp,
       data,
@@ -54,16 +58,17 @@ async function batchNouce(data) {
         info.previousHash,
         hash
       );
+      console.log(`[Worker Thread] Mined a new block! ${JSON.stringify(newBlock)}, hash: ${newBlock.toHash()}`);
       break;
     }
     nouce++;
   }
   if (!newBlock) {
     // 没找到，继续下一各batch
-    console.log(`[Worker Thread] batch over`)
+    console.log(`[Worker Thread] batch over`);
     setImmediate(batchNouce);
   } else {
-    return newBlock
+    return newBlock;
   }
 }
 
@@ -71,27 +76,22 @@ function mine() {
   const now = new Date();
   console.log(`[Worker Thread] Miner is mining...`);
 
-  generateNextBlockWithMine().then(newBlock => {
+  const newBlock = generateNextBlockWithMine();
 
-      const finished = new Date();
-      const timeDifference = finished.getTime() - now.getTime();
+  const finished = new Date();
+  const timeDifference = finished.getTime() - now.getTime();
 
-      // 转换为小时、分钟和秒
-      const hours = Math.floor(timeDifference / (1000 * 60 * 60));
-      const minutes = Math.floor(
-        (timeDifference % (1000 * 60 * 60)) / (1000 * 60)
-      );
-      const seconds = Math.floor((timeDifference % (1000 * 60)) / 1000);
-      console.log(`[Worker Thread] Miner finished.
+  // 转换为小时、分钟和秒
+  const hours = Math.floor(timeDifference / (1000 * 60 * 60));
+  const minutes = Math.floor((timeDifference % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((timeDifference % (1000 * 60)) / 1000);
+  console.log(`[Worker Thread] Miner finished.
         Cost time : ${hours}h ${minutes}m ${seconds}s. 
         Difficulty: ${newBlock.difficulty}, Nouce : ${newBlock.nouce}`);
 
-      setTimeout(() => {
-        parentPort.postMessage({ type: "newBlock", newBlock });
-      }, 1000 * 10);
-    }).catch((err) => {
-      console.error(`[Worker Thread] Mining error: ${err.message}`);
-    });
+  setTimeout(() => {
+    parentPort.postMessage({ type: "newBlock", newBlock });
+  }, 1000 * 10);
 }
 
 parentPort.on("message", (msg) => {

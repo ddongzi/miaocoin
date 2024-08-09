@@ -16,6 +16,8 @@ const BLOCKS_FILE = "/blocks.json";
 const Transactions_FILE = "/transactions.json";
 const UTXOUTS_FILE = "/utxouts.json";
 
+const G_NAME = "BLOCKCHAIN";
+
 const BLOCK_GENERATION_INTERNAL = 60 * 3; // 3 min
 const DIFFICULTY_ADJUSTMENT_INTERVAL = 3; // 3 blocks
 
@@ -43,16 +45,16 @@ class BlockChain {
   }
 
   // 初始节点使用
-  // todo : 与构造器分离，异步初始化
-  async init() {
+   init() {
     // todo :容器初始化写死同一个创世区块
     // TODO: 只有初始节点需要初始化，其他节点向peer同步
     console.log("#0 init blockchain..");
     // Create from genius block if blockchain is empty.
+    console.log(`[${G_NAME}] INIT blocks ${this.blocks}`);
     if (this.blocks.length === 0) {
       console.log("Blockchain is empty, creating from genesis block");
       try {
-        const geniusBlock = await this.createGeniusBlock();
+        const geniusBlock =  this.createGeniusBlock();
         this.blocks.push(geniusBlock);
         this.blocksDb.write(this.blocks);
       } catch (error) {
@@ -64,10 +66,8 @@ class BlockChain {
   verifySignTx(tx) {
     let res = true;
     for (const txin of tx.inputs) {
-      const pubkeyObj = MiaoCrypto.importPublicKey(tx.publicKey);
-      const sigBuffer = MiaoCrypto.base64ToArrayBuffer(txin.signature);
-      const dataBuffer = MiaoCrypto.stringToArrayBuffer(tx.id);
-      if (!MiaoCrypto.verify(pubkeyObj, sigBuffer, dataBuffer)) {
+      console.log(`[Blockchain] verify , data ${tx.id}, signature ${txin.signature}, pubkey ${tx.publicKey}`)
+      if (!MiaoCrypto.verify(tx.publicKey, txin.signature, tx.id)) {
         res = false;
         console.log(`Invalid sign for tx ${tx.id}`);
         break; // 退出循环
@@ -168,14 +168,14 @@ class BlockChain {
   // 生成一个块 并加入链上
 
   // 链上创世区块
-  async createGeniusBlock() {
+   createGeniusBlock() {
     let index = 0;
     let timestamp = new Date().toUTCString();
     let difficulty = 5;
     let nouce = 0;
     let data = "Genesis Block";
     let previoushash = "0000000000000000";
-    let hash = await Block.caculateHash(
+    let hash =  Block.caculateHash(
       index,
       timestamp,
       data,
@@ -205,9 +205,9 @@ class BlockChain {
       typeof block.hash === "string"
     );
   }
-  isValidBlockChain(chain) {
+  async isValidBlockChain(chain) {
     for (var i = 1; i < chain.blocks.length; i++) {
-      if (!this.checkBlock(chain.blocks[i], chain.blocks[i - 1])) {
+      if (! this.checkBlock(chain.blocks[i], chain.blocks[i - 1])) {
         console.error("Blockchain is not valid");
         return false;
       }
@@ -225,15 +225,15 @@ class BlockChain {
     return this.blocks[this.blocks.length - 1];
   }
   // 将一个block加入链
-  addBlock(newBlock) {
-    console.log(`add block ${newBlock.index}`);
-    if (this.checkBlock(newBlock, this.getLastBlock())) {
+   addBlock(newBlock) {
+    console.log(`[BlockChain] add block ${JSON.stringify(newBlock)}}`);
+    if ( this.checkBlock(newBlock, this.getLastBlock())) {
       // console.log(`adding block ${JSON.stringify(newBlock)}`)
 
       this.blocks.push(newBlock);
       this.blocksDb.write(this.blocks);
 
-      console.info(`Blockchain  added Block#${newBlock.index}`);
+      console.info(`[${G_NAME}] Blockchain  added Block#${newBlock.index}`);
       return true;
     }
     console.log(`addblock checkblock failed`);
@@ -246,44 +246,48 @@ class BlockChain {
    * @param {Block} previousBlock 
    * @returns {boolean} 
    */
-  checkBlock(newBlock, previousBlock) {
-    console.log(`checking block...`);
+   checkBlock(newBlock, previousBlock) {
+    console.log(`[${G_NAME}] checking block... ${JSON.stringify(newBlock)}`);
 
     if (!previousBlock) {
       // 前面区块不存在：说明 链相差至少2个块，放弃此次添加，等待同步
-      console.error(`Check block failed: previous block not exist`);
+      console.error(`[${G_NAME}] Check block failed: previous block not exist`);
       return false;
     }
-    console.log(`checking phrase1 succeed...`);
+    console.log(`[${G_NAME}] checking phrase1 succeed...`);
 
     if (previousBlock.index + 1 !== newBlock.index) {
       console.error(
-        `CheckBlock failed :Invalid index. Expected ${
+        `[${G_NAME}] CheckBlock failed :Invalid index. Expected ${
           previousBlock.index + 1
         }, got ${newBlock.index}`
       );
       return false;
     }
-    console.log(`checking phrase2 succeed...`);
+    console.log(`[${G_NAME}] checking phrase2 succeed...`);
+
     if (previousBlock.hash !== newBlock.previoushash) {
       console.error(
-        `Invalid previous hash, expected:${previousBlock.hash} ,got: ${
+        `[${G_NAME}] Invalid previous hash, expected:${previousBlock.hash} ,got: ${
           newBlock.previoushash
         },`
       );
       return false;
     }
-    console.log(`checking phrase3 succeed...`);
+    console.log(`[${G_NAME}] checking phrase3 succeed...`);
 
     if (newBlock.toHash() !== newBlock.hash) {
+
       console.error(
-        `newBlock hash failed, expected ${
+        `[${G_NAME}] newBlock hash failed, expected ${
           newBlock.hash
-        }, got ${newBlock.toHash()}`
+        }, got ${newBlock.toHash()}
+        , really ${Block.caculateHash(newBlock.index,newBlock.timestamp,newBlock.data,newBlock.previoushash,newBlock.difficulty,newBlock.nouce)}`
       );
       return false;
     }
-    console.log(`check block succeeded.`);
+
+    console.log(`[${G_NAME}] check block succeeded.`);
     return true;
   }
 
@@ -318,7 +322,7 @@ class BlockChain {
     if (!Transaction.isValidAddress(address)) {
       console.error("Invalid address");
     }
-    const coinBaseTx = await Transaction.generateConinBaseTransaction(
+    const coinBaseTx =  Transaction.generateConinBaseTransaction(
       this.node.miner.address,
       this.getLastBlock().index + 1
     );
@@ -333,7 +337,7 @@ class BlockChain {
     );
     this.updateUTxOutsFromTxs([tx]);
     const blockData = [coinBaseTx, tx];
-    const newBlock = await this.generateNextBlock(blockData);
+    const newBlock =  this.generateNextBlock(blockData);
     return newBlock;
   }
   // 通过未确认交易池 生成一个块
@@ -359,7 +363,7 @@ class BlockChain {
 
   // 新的交易来更新 utxOuts
   updateUTxOutsFromTxs(transactions) {
-    console.log(`update utxouts from txs ... `);
+    console.log(`[BLOCKCHAIN] update utxouts from txs ... `);
     const newUnspentTxOutputs = transactions
       .map((t) => {
         return t.outputs.map(
@@ -462,7 +466,7 @@ class BlockChain {
 
   // 获取某个地址余额
   getBalance(address) {
-    console.log(`getBalance: ${address}, ${JSON.stringify(this.uTxouts)}`);
+    console.log(`[Blockchain] getBalance ${address}, ${JSON.stringify(this.uTxouts)}`);
     return this.uTxouts
       .filter((utxout) => utxout.address === address)
       .map((utxout) => utxout.amount)
@@ -470,7 +474,7 @@ class BlockChain {
   }
 
   // 生成一笔交易（未确认交易：不添加到区块链）：从senderAddress的余额中扣除amount给receiverAdress。
-  async generateTxWithoutSign(senderAddress, receiverAdress, amount) {
+   generateTxWithoutSign(senderAddress, receiverAdress, amount) {
     // console.log(`generate tx without sign... ===> ${senderAddress} send ${amount} to ${receiverAdress}`)
     const tx = new Transaction();
 
@@ -514,7 +518,7 @@ class BlockChain {
     }
     //console.log(`输出,  ${JSON.stringify(txOutputs)}`)
     tx.outputs = txOutputs;
-    tx.id = await Transaction.getTransactionId(tx);
+    tx.id =  Transaction.getTransactionId(tx);
     tx.inputs = txInputs;
     // console.log(`generate tx without sign  finished. ${JSON.stringify(tx)}`);
 
@@ -547,9 +551,8 @@ class BlockChain {
   }
 
   // 收到其他节点的 新区块
-  receiveNewBlock(newBlock) {
+  async receiveNewBlock(newBlock) {
     console.log(`receive new block.... ${JSON.stringify(newBlock)}`);
-    // TODO: 接收到新区块，加入到区块链
     // 1. 验证新区块是否合法
     // 2. 验证新区块是否是上一个区块的后续区块
     // 3. 验证新区块中的所有交易是否有效
@@ -558,7 +561,7 @@ class BlockChain {
     if (!this.checkBlock(newBlock, this.getLastBlock())) {
       return false;
     }
-    const added = this.addBlock(newBlock);
+    const added =  this.addBlock(newBlock);
     if (added) {
       // 从新区块更新utxouts
       this.updateUTxOutsFromTxs(newBlock.data);

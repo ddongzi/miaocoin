@@ -13,16 +13,10 @@ class Block{
         this.nouce = nouce
         // console.log(`Block constructor ${JSON.stringify(this)}`);
     }
-    async toHash() {
 
-        return await Block.caculateHash(this.index, this.timestamp,this.data,
-            this.previoushash, this.difficulty, this.nouce
-        )
-    }
 
     // 传入JSON object 
     static fromJson(blockJsonObj) {
-        // console.log(`Block from JSON: ${JSON.stringify(blockJsonObj)}`);
         let block = new Block();
         Object.keys(blockJsonObj).forEach(key => {
             if (key === 'data' && blockJsonObj[key]) {
@@ -31,6 +25,10 @@ class Block{
                 block[key] = blockJsonObj[key];
             }
         })
+        // console.log(`[Block] Block from JSON: \n
+        //     Before:${JSON.stringify(blockJsonObj)}\n
+        //     After:${JSON.stringify(block)}`);
+
         return block;
     }
     /**
@@ -41,12 +39,17 @@ class Block{
      * @param {*} previoushash 
      * @param {*} difficulty 
      * @param {*} nouce 
-     * @returns {string} hex encoded string
+     * @returns {string} HASH
      */
-    static async caculateHash(index,timestamp,data,previoushash,difficulty,nouce) {
+    static  caculateHash(index,timestamp,data,previoushash,difficulty,nouce) {
         // console.log(`caculateHash ${index + previoushash + timestamp +difficulty + nouce + JSON.stringify(data)}`)
-        const hashBuffer = await MiaoCrypto.hash(index + previoushash + timestamp +difficulty + nouce + JSON.stringify(data));
-        return MiaoCrypto.arrayBufferToHex(hashBuffer)
+        return  MiaoCrypto.hash(index + previoushash + timestamp +difficulty + nouce + JSON.stringify(data));
+         
+    }
+    toHash() {
+        return  Block.caculateHash(this.index, this.timestamp,this.data,
+            this.previoushash, this.difficulty, this.nouce
+        )
     }
 }
 module.exports = Block;

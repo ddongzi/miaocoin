@@ -89,7 +89,9 @@ class P2P {
           this.queryAllBlocks(ws);
           break;
         case MessageType.RESPONSE_BLOCKCHAIN:
-          this.receiveNewBlock(message.data);
+          (() => {
+             this.node.blockchain.receiveNewBlock(message.data);
+          })()
           break;
         case MessageType.QUERY_TRANSACTION_POOL:
           const msg = this.node.queryTransactionPool();
@@ -110,7 +112,9 @@ class P2P {
           break;
         case MessageType.NEW_BLOCK:
           // 收到 新块
-          this.node.blockchain.receiveNewBlock(Block.fromJson(message.data));
+          ( ()=>{
+             this.node.blockchain.receiveNewBlock(Block.fromJson(message.data));
+          })()
           break;
         case MessageType.NOTIFY_SYNC:
           // 向指定peer请求同步
@@ -183,7 +187,10 @@ class P2P {
 
       switch (message.type) {
         case MessageType.RESPONSE_BLOCKCHAIN:
-          this.node.receiveNewBlock(message.data);
+
+          ( ()=>{
+             this.node.blockchain.receiveNewBlock(message.data);
+          })()
           break;
         case MessageType.RESPONSE_SYNC_BLOCKCHAIN:
           this.node.blockchain.updateBlockchainFromSync(

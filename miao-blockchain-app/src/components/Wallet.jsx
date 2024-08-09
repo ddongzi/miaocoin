@@ -103,10 +103,10 @@ function Wallet() {
 
     reader.readAsText(file);
   };
-  const handleImportWallet = () => {
-    setPublicKey(importPublicKey);
-    setAddress(MyCrypto.pemToHex(importPublicKey));
+  const handleImportWallet = async () => {
+    setAddress(await MyCrypto.hash(importPublicKey));
     setPrivateKey(importPrivateKey);
+    setPublicKey(importPublicKey);
 
     console.log(
       `导入钱包\n${importPublicKey}\n${MyCrypto.pemToHex(importPrivateKey)}`
@@ -123,12 +123,16 @@ function Wallet() {
   };
 
   const signTx = async (tx) => {
-    console.log(`sign TX ${tx.inputs.length}`);
+    console.log(`sign TX, size ${tx.inputs.length}`);
     tx.inputs = await Promise.all(
       tx.inputs.map(async (txin, index) => {
-        console.log(`sign txin ${index}`);
-        txin.signature = await MyCrypto.sign(tx.id, privateKey);
-        console.log(`signed txin ${index}, data ${tx.id} with signature ${txin.signature}, private key ${MyCrypto.pemToHex(privateKey)}, pub hex ${address}`);
+        // console.log(`sign txin ${index}`);
+        txin.signature =  await MyCrypto.sign(tx.id, privateKey);
+        console.log(
+          `signed txin ${index}, data ${tx.id} with signature ${
+            txin.signature
+          }, private key ${MyCrypto.pemToHex(privateKey)}, pub hex ${address}`
+        );
         return txin;
       })
     );
@@ -137,13 +141,25 @@ function Wallet() {
     return tx;
   };
   const verifyTx = async (tx) => {
-    tx.inputs = await Promise.all(
-      tx.inputs.forEach(async (txin) => {
-        const isVaid = await MyCrypto.verify(tx.id, txin.signature,publicKey)
-        console.log(`verified txin ,data : ${tx.id}, valid ${isVaid}, signature : `);
-      })
-    );
-  }
+    console.log(`verifying tx size ${tx.inputs.length}`);
+    let result = true;
+
+    const promises = tx.inputs.map(async (txin) => {
+      const isValid = await MyCrypto.verify(tx.id, txin.signature, publicKey);
+      console.log(
+        `verified txin, data: ${tx.id}, valid: ${isValid}, signature: ${txin.signature}`
+      );
+
+      if (!isValid) {
+        result = false;
+      }
+      return isValid;
+    });
+
+    await Promise.all(promises);
+
+    return result;
+  };
   const handleTransfer = () => {
     if (!amount || !receiver) {
       setErrorMessage("请填写所有字段。");
@@ -153,7 +169,7 @@ function Wallet() {
     setTransferLoading(true);
     transfer(address, receiver, amount)
       .then((response) => {
-        console.log('transfer res ',response.data)
+        console.log("transfer res ", response.data);
         signTx(response.data)
           .then((signedTx) => {
             verifyTx(signedTx)
@@ -168,8 +184,7 @@ function Wallet() {
               })
               .catch((err) => {
                 console.error("Error verifying transaction:", err);
-              })
-
+              });
           })
           .catch((error) => {
             console.error("Error signing transaction:", error);
@@ -335,17 +350,17 @@ function Wallet() {
             will lose access to your wallet.
           </DialogContentText>
           <Box sx={{ mt: 2 }}>
-          <Typography variant="subtitle1">Public Key:</Typography>
-          <Typography variant="body2" sx={{ wordBreak: 'break-all' }}>
-            {publicKey}
-          </Typography>
-        </Box>
-        <Box sx={{ mt: 2 }}>
-          <Typography variant="subtitle1">Private Key:</Typography>
-          <Typography variant="body2" sx={{ wordBreak: 'break-all' }}>
-            {privateKey}
-          </Typography>
-        </Box>
+            <Typography variant="subtitle1">Public Key:</Typography>
+            <Typography variant="body2" sx={{ wordBreak: "break-all" }}>
+              {publicKey}
+            </Typography>
+          </Box>
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="subtitle1">Private Key:</Typography>
+            <Typography variant="body2" sx={{ wordBreak: "break-all" }}>
+              {privateKey}
+            </Typography>
+          </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleSaveWalletToFile} color="primary">

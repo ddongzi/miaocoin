@@ -33,7 +33,7 @@ class Transaction {
   }
 
   // 生成交易ID
-  static async getTransactionId(transaction) {
+  static  getTransactionId(transaction) {
     const inputContent = transaction.inputs
       .map((t) => t.txOutId + t.txOutIndex)
       .reduce((a, b) => a + b, "");
@@ -44,9 +44,8 @@ class Transaction {
     // console.log("Input Content:", inputContent);
     // console.log("Output Content:", outputContent);
     // console.log("Concatenated Content:", inputContent + outputContent);
-    const hashBuffer = await MiaoCrypto.hash(inputContent + outputContent)
-    const hashhex = MiaoCrypto.arrayBufferToHex(hashBuffer)
-    return hashhex
+    return MiaoCrypto.hash(inputContent + outputContent)
+     
   }
 
   // 在未花费交易输出列表中 根据交易ID和index ，找到 utxout
@@ -77,8 +76,8 @@ class Transaction {
     }
   }
 
-  async isValidTransaction(transaction) {
-    if (await Transaction.getTransactionId(transaction) !== transaction.id) {
+   isValidTransaction(transaction) {
+    if ( Transaction.getTransactionId(transaction) !== transaction.id) {
       console.error("Invalid transaction ID");
       return false;
     }
@@ -95,7 +94,6 @@ class Transaction {
     Object.keys(data).forEach((key) => {
       tx[key] = data[key];
     });
-    tx.hash = tx.toHash();
     return tx;
   }
 
@@ -105,7 +103,7 @@ class Transaction {
   }
 
   // 生成最初交易
-  static async generateConinBaseTransaction(minerAddress, blockIndex) {
+  static  generateConinBaseTransaction(minerAddress, blockIndex) {
     const t = new Transaction();
     const txIn = new TxInput();
     txIn.signature = "";
@@ -114,9 +112,7 @@ class Transaction {
 
     t.inputs = [txIn];
     t.outputs = [new TxOutput(minerAddress, COINBASE_AMOUNT)];
-    t.id = await Transaction.getTransactionId(t);
-    console.log(`Coinbase transaction created.... ${JSON.stringify(t)}`);
-
+    t.id =  Transaction.getTransactionId(t);
     return t;
   }
 }

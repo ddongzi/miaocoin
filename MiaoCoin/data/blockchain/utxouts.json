@@ -1,0 +1,14 @@
+[
+    {
+        "txOutId": "0b2c607a657161308476afda48b457b6391689999b706c1e2d94acb9d3822ef7",
+        "txOutIndex": 0,
+        "address": "b9c5ce084a770b6d0aa5aed9099a09b60ac00825d95c46b83b9bc6859820d647",
+        "amount": 50
+    },
+    {
+        "txOutId": "aecf8f6cf61da4ab2f542fbeba5af87931ab44a5482a7fa711344977e5d35365",
+        "txOutIndex": 0,
+        "address": "b9c5ce084a770b6d0aa5aed9099a09b60ac00825d95c46b83b9bc6859820d647",
+        "amount": 50
+    }
+]

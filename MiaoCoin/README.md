@@ -269,9 +269,41 @@ Transaction pool is a structure that contains all of the “unconfirmed transact
 
 
 
+# 策略
+
+在关键路径上使用同步方法（如启动时候加载配置，初始化），在高并发路径使用异步（区块同步，交易处理）
+
+## 异步
+
+webcrypto底层密码库很多方法是异步的，但区块链中大部分都会调用这个库才能使用，如何解决呢？这么多异步操作冗余。
+
+1. 比如创建miner对象时候，需要初始化密钥，但是是异步的，如何保证对象正确初始化，才能继续进行？
+
+> 通过 静态异步创建导出对象，而非直接new(工厂模式)
+
+## 同步
+
+
+
 # 密码
 
 https://nodejs.org/api/webcrypto.html#web-crypto-api
+
+
+
+
+
+>  为啥nodejs crypto同步的，而webcrypto是异步的？
+
+- Nodejs是基于openssl实现的。openssl本身是同步的。Nodejs认为IO是异步的，而CPU密集可以同步也可以异步。 node:crypto 提供了同步和异步两种方式
+- webcrypto为浏览器而生，浏览器通常涉及大量异步并发操作，所以本身设计为异步操作
+- 同步优点在于确定性，异步优点在于可扩展非阻塞。
+
+
+
+
+
+
 
 web crypto api 不支持spec256k1曲线参数。
 
