@@ -6,7 +6,8 @@ const {P2P} = require('./p2p')
 const cors = require('cors');
 const { Transaction } = require('../blockchain/transaction')
 const MiaoCrypto = require('../util/miaoCrypto')
-
+const Logger = require('../util/log')
+const logger = new Logger(__filename)
 class HttpServer {
     constructor(port,node) {
         this.node = node
@@ -58,7 +59,7 @@ class HttpServer {
         })
         this.app.post('/addPeer', (req, res) => {
             const peer = req.body.peer
-            console.log(`post Connecting to ${peer}`);
+            logger.log(`post Connecting to ${peer}`);
             this.p2p.connectPeer(peer)
             res.send('Connected to peer')
         })
@@ -83,7 +84,7 @@ class HttpServer {
         this.app.post('/sendSignedTx', (req, res) => {
             // 放到未确认交易
             const tx = req.body.tx
-            console.log(`received signed tx ${JSON.stringify(tx)}}`)
+            logger.log(`received signed tx ${JSON.stringify(tx)}}`)
             // 验签
             
             if (this.blockchain.verifySignTx(tx)) {
@@ -110,7 +111,7 @@ class HttpServer {
 
             const blockhashes = this.blockchain.blocks.map(block => block.hash);
             const mineraddress = this.node.miner.address;
-            console.log(`get node details: ${JSON.stringify(blockhashes)} , ${mineraddress}`)
+            logger.log(`get node details: ${JSON.stringify(blockhashes)} , ${mineraddress}`)
             res.send({
                 'blockhashes': blockhashes,
                'mineraddress': mineraddress

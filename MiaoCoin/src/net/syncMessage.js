@@ -1,5 +1,6 @@
 const Blocks = require("../blockchain/blocks")
-
+const Logger = require('../util/log')
+const logger = new Logger(__filename)
 // 节点间同步信息，方便序列化处理
 class SyncMessage{
     constructor(blocks,utxouts,peers) {

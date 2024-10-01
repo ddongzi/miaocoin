@@ -6,6 +6,8 @@ const { P2P } = require("./net/p2p");
 
 const { Worker } = require('worker_threads');
 const { Console } = require("console");
+const Logger = require('./util/log')
+const logger = new Logger(__filename)
 
 const httpPort = process.env.HTTP_PORT || 3000;
 const p2pPort = process.env.P2P_PORT || 4000;
@@ -24,7 +26,7 @@ node_command
     .command('--root <root>')
     .description('node root role')
     .action((options) => {
-        console.log(`get options : ${options}`);
+        logger.log(`get options : ${options}`);
         // 
         if (options.root) {
             node_config.root = options.root

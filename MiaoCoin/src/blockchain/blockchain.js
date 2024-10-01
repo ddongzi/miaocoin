@@ -16,12 +16,15 @@ const BLOCKS_FILE = "/blocks.json";
 const Transactions_FILE = "/transactions.json";
 const UTXOUTS_FILE = "/utxouts.json";
 
-const G_NAME = "BLOCKCHAIN";
-
 const BLOCK_GENERATION_INTERNAL = 60 * 3; // 3 min
 const DIFFICULTY_ADJUSTMENT_INTERVAL = 3; // 3 blocks
 
 const DATA_PATH = "/home/dong/JSCODE/MiaoCoin/data/blockchain";
+
+const Logger = require('../util/log.js')
+const logger = new Logger(__filename);
+
+
 class BlockChain {
   // 每个节点都有一份区块链副本，
   constructor(node) {
@@ -48,11 +51,11 @@ class BlockChain {
    init() {
     if (this.node.isRoot) {
         // 只有初始节点需要初始化，其他节点向peer同步
-        console.log("#0 node init blockchain..");
+        logger.log("#0 node init blockchain..");
         // Create from genius block if blockchain is empty.
-        console.log(`[${G_NAME}] INIT blocks ${this.blocks}`);
+        logger.log(`INIT blocks ${this.blocks}`);
         if (this.blocks.length === 0) {
-          console.log("Blockchain is empty, creating from genesis block");
+          logger.log("Blockchain is empty, creating from genesis block");
           try {
             const geniusBlock =  this.createGeniusBlock();
             this.blocks.push(geniusBlock);
@@ -68,10 +71,10 @@ class BlockChain {
   verifySignTx(tx) {
     let res = true;
     for (const txin of tx.inputs) {
-      console.log(`[Blockchain] verify , data ${tx.id}, signature ${txin.signature}, pubkey ${tx.publicKey}`)
+      logger.log(`[Blockchain] verify , data ${tx.id}, signature ${txin.signature}, pubkey ${tx.publicKey}`)
       if (!MiaoCrypto.verify(tx.publicKey, txin.signature, tx.id)) {
         res = false;
-        console.log(`Invalid sign for tx ${tx.id}`);
+        logger.log(`Invalid sign for tx ${tx.id}`);
         break; // 退出循环
       }
     }
@@ -89,14 +92,14 @@ class BlockChain {
       MiaoCrypto.hash(JSON.stringify(newBlocks)) ===
       MiaoCrypto.hash(JSON.stringify(this.blocks))
     ) {
-      console.log(`no need to update.`);
+      logger.log(`no need to update.`);
       return false;
     }
     // 2. 最长链原则判断是否更新
     if (newBlocks.length < this.blocks.length) {
       return false;
     }
-    console.log(`update blocks ...`);
+    logger.log(`update blocks ...`);
     this.blocks = newBlocks;
     this.blocksDb.write(this.blocks);
     return true;
@@ -104,12 +107,12 @@ class BlockChain {
 
   // 从同步数据utxouts更新
   updateUTXouts(utxOuts) {
-    console.log(`update utxouts ...`);
+    logger.log(`update utxouts ...`);
     if (
       MiaoCrypto.hash(JSON.stringify(utxOuts)) ===
       MiaoCrypto.hash(JSON.stringify(this.uTxouts))
     ) {
-      console.log(`no need to update.`);
+      logger.log(`no need to update.`);
       return;
     }
 
@@ -120,7 +123,7 @@ class BlockChain {
   // 从同步数据来更新
   // data为json str格式
   updateBlockchainFromSync(data) {
-    console.log(`update blockchain from sync ${data}`);
+    logger.log(`update blockchain from sync ${data}`);
     // 如果同步失败，就自己初始化
     const syncMsg = SyncMessage.deserialize(data);
 
@@ -144,7 +147,7 @@ class BlockChain {
     return this.getLastBlock().difficulty;
   }
   getAdjustedDifficulty() {
-    console.log(`difficulty adjusted.`);
+    logger.log(`difficulty adjusted.`);
     const prevAdjustedBlock =
       this.blocks[this.blocks.length - DIFFICULTY_ADJUSTMENT_INTERVAL];
     const timeExpected =
@@ -194,7 +197,7 @@ class BlockChain {
       previoushash,
       hash
     );
-    console.log(`Created genius block ${newBlock}`);
+    logger.log(`Created genius block ${newBlock}`);
     return newBlock;
   }
 
@@ -228,9 +231,9 @@ class BlockChain {
   }
   // 将一个block加入链
    addBlock(newBlock) {
-    console.log(`[BlockChain] add block ${JSON.stringify(newBlock)}}`);
+    logger.log(`[BlockChain] add block ${JSON.stringify(newBlock)}}`);
     if ( this.checkBlock(newBlock, this.getLastBlock())) {
-      // console.log(`adding block ${JSON.stringify(newBlock)}`)
+      // logger.log(`adding block ${JSON.stringify(newBlock)}`)
 
       this.blocks.push(newBlock);
       this.blocksDb.write(this.blocks);
@@ -238,7 +241,7 @@ class BlockChain {
       console.info(`[${G_NAME}] Blockchain  added Block#${newBlock.index}`);
       return true;
     }
-    console.log(`addblock checkblock failed`);
+    logger.log(`addblock checkblock failed`);
     return false;
   }
   // 检查新来的区块是否符合要求
@@ -249,14 +252,14 @@ class BlockChain {
    * @returns {boolean} 
    */
    checkBlock(newBlock, previousBlock) {
-    console.log(`[${G_NAME}] checking block... ${JSON.stringify(newBlock)}`);
+    logger.log(`[${G_NAME}] checking block... ${JSON.stringify(newBlock)}`);
 
     if (!previousBlock) {
       // 前面区块不存在：说明 链相差至少2个块，放弃此次添加，等待同步
       console.error(`[${G_NAME}] Check block failed: previous block not exist`);
       return false;
     }
-    console.log(`[${G_NAME}] checking phrase1 succeed...`);
+    logger.log(`[${G_NAME}] checking phrase1 succeed...`);
 
     if (previousBlock.index + 1 !== newBlock.index) {
       console.error(
@@ -266,7 +269,7 @@ class BlockChain {
       );
       return false;
     }
-    console.log(`[${G_NAME}] checking phrase2 succeed...`);
+    logger.log(`[${G_NAME}] checking phrase2 succeed...`);
 
     if (previousBlock.hash !== newBlock.previoushash) {
       console.error(
@@ -276,7 +279,7 @@ class BlockChain {
       );
       return false;
     }
-    console.log(`[${G_NAME}] checking phrase3 succeed...`);
+    logger.log(`[${G_NAME}] checking phrase3 succeed...`);
 
     if (newBlock.toHash() !== newBlock.hash) {
 
@@ -289,7 +292,7 @@ class BlockChain {
       return false;
     }
 
-    console.log(`[${G_NAME}] check block succeeded.`);
+    logger.log(`[${G_NAME}] check block succeeded.`);
     return true;
   }
 
@@ -318,7 +321,7 @@ class BlockChain {
     receiverAdress,
     amount
   ) {
-    console.log(
+    logger.log(
       `Generating Next Block With Transaction.....${this.uTxouts.length}`
     );
     if (!Transaction.isValidAddress(address)) {
@@ -349,7 +352,7 @@ class BlockChain {
 
   // 生成一笔交易 放入池子
   generateTransactionToPool(address, amount) {
-    console.log(
+    logger.log(
       `Generating transaction to pool, utxouts ${this.uTxouts} ,pool ${this.pool}`
     );
     const tx = this.generateTxWithoutSign(
@@ -365,7 +368,7 @@ class BlockChain {
 
   // 新的交易来更新 utxOuts
   updateUTxOutsFromTxs(transactions) {
-    console.log(`[BLOCKCHAIN] update utxouts from  new txs ... ${JSON.stringify(transactions)} `);
+    logger.log(`[BLOCKCHAIN] update utxouts from  new txs ... ${JSON.stringify(transactions)} `);
     const newUnspentTxOutputs = transactions
       .map((t) => {
         return t.outputs.map(
@@ -386,15 +389,15 @@ class BlockChain {
             t.txOutId === utxout.txOutId && t.txOutIndex === utxout.txOutIndex
         )
     );
-    // console.log(`After filter: ${JSON.stringify(resultingUnspentTxOuts)}`);
+    // logger.log(`After filter: ${JSON.stringify(resultingUnspentTxOuts)}`);
     resultingUnspentTxOuts = resultingUnspentTxOuts.concat(newUnspentTxOutputs);
 
-    console.log(
+    logger.log(
       `newUnspentTxOutputs: ${JSON.stringify(
         newUnspentTxOutputs
       )}\n consumedTxOutputs: ${JSON.stringify(consumedTxOutputs)}`
     );
-    console.log(
+    logger.log(
       `Old uxOutputs: ${JSON.stringify(
         this.uTxouts
       )}\n New uxOutputs: ${JSON.stringify(resultingUnspentTxOuts)}`
@@ -413,16 +416,16 @@ class BlockChain {
   addToTransactionPool(tx) {
     if (this.isValidTxForPool(tx)) {
       this.pool.add(tx);
-      console.log(`add unconfirmed tx to pool successfully.`);
+      logger.log(`add unconfirmed tx to pool successfully.`);
 
       if (this.pool.isFull()) {
         // 触发创建区块
-        console.log(`Pool is full, ready to generate next block.`);
+        logger.log(`Pool is full, ready to generate next block.`);
         this.generateNextBlockWithPool();
       }
       return tx;
     }
-    console.log(`add unconfirmed tx to pool failed.`);
+    logger.log(`add unconfirmed tx to pool failed.`);
     return { tx: "error" };
   }
 
@@ -441,7 +444,7 @@ class BlockChain {
         }
       });
     });
-    console.log(`[Blockchain] check valid tx for pool ${res}`);
+    logger.log(`[Blockchain] check valid tx for pool ${res}`);
     return res;
   }
   getBlockByHash(hash) {
@@ -468,7 +471,7 @@ class BlockChain {
 
   // 获取某个地址余额
   getBalance(address) {
-    console.log(`[Blockchain] getBalance ${address}, ${JSON.stringify(this.uTxouts)}`);
+    logger.log(`[Blockchain] getBalance ${address}, ${JSON.stringify(this.uTxouts)}`);
     return this.uTxouts
       .filter((utxout) => utxout.address === address)
       .map((utxout) => utxout.amount)
@@ -477,7 +480,7 @@ class BlockChain {
 
   // 生成一笔交易（未确认交易：不添加到区块链）：从senderAddress的余额中扣除amount给receiverAdress。
    generateTxWithoutSign(senderAddress, receiverAdress, amount) {
-    // console.log(`generate tx without sign... ===> ${senderAddress} send ${amount} to ${receiverAdress}`)
+    // logger.log(`generate tx without sign... ===> ${senderAddress} send ${amount} to ${receiverAdress}`)
     const tx = new Transaction();
 
     const myUTxOutputs = this.uTxouts.filter((utxout) => {
@@ -495,7 +498,7 @@ class BlockChain {
         break;
       }
     }
-    // console.log(`找到够支付的utxout, ${leftAmount}, NEED : ${JSON.stringify(needUTxOutputs)}}`)
+    // logger.log(`找到够支付的utxout, ${leftAmount}, NEED : ${JSON.stringify(needUTxOutputs)}}`)
     // 将其转化未交易的输入
     const txInputs = needUTxOutputs.map((utxout) => {
       const unsignedTxInput = new TxInput(
@@ -506,7 +509,7 @@ class BlockChain {
       return unsignedTxInput;
     });
 
-    // console.log(`将其转化未交易的输入,  ${JSON.stringify(txInputs)}}`)
+    // logger.log(`将其转化未交易的输入,  ${JSON.stringify(txInputs)}}`)
 
     // 输出
     const txOutputs = [];
@@ -518,18 +521,18 @@ class BlockChain {
       txOutputs.push(txOutput);
       txOutputs.push(leftTxOutput);
     }
-    //console.log(`输出,  ${JSON.stringify(txOutputs)}`)
+    //logger.log(`输出,  ${JSON.stringify(txOutputs)}`)
     tx.outputs = txOutputs;
     tx.id =  Transaction.getTransactionId(tx);
     tx.inputs = txInputs;
-    // console.log(`generate tx without sign  finished. ${JSON.stringify(tx)}`);
+    // logger.log(`generate tx without sign  finished. ${JSON.stringify(tx)}`);
 
     return tx;
   }
 
   // 返回区块链同步信息
   getBlockchainSyncData() {
-    console.log(`return blockchain sync data.... `);
+    logger.log(`return blockchain sync data.... `);
     // 获取所有对等节点的 URL，并去重
     let peers = [];
     for (let url of this.node.p2p.peers.keys()) {
@@ -554,7 +557,7 @@ class BlockChain {
 
   // 收到其他节点的 新区块
    receiveNewBlock(newBlock) {
-    console.log(`receive new block.... ${JSON.stringify(newBlock)}`);
+    logger.log(`receive new block.... ${JSON.stringify(newBlock)}`);
     // 1. 验证新区块是否合法
     // 2. 验证新区块是否是上一个区块的后续区块
     // 3. 验证新区块中的所有交易是否有效
@@ -568,7 +571,7 @@ class BlockChain {
       // 从新区块更新utxouts
       this.updateUTxOutsFromTxs(newBlock.data);
     }
-    console.log(`receiveNewBlock Successfully`);
+    logger.log(`receiveNewBlock Successfully`);
     // 广播同步: 你们要来找我同步了
     this.node.p2p.broadcast({
       type: MessageType.NOTIFY_SYNC,

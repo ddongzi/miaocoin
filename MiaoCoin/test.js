@@ -6,12 +6,12 @@ fs.readFile('./src/config.json',(err,data) => {
         return
     } else {
         const json_data = JSON.parse(data)
-        console.log(json_data.version)
+        logger.log(json_data.version)
     }
 })
 // 同步读取
 const data_sync = fs.readFileSync('./src/config.json')
 const json_data_sync = JSON.parse(data_sync)
-console.log(json_data_sync.version)
+logger.log(json_data_sync.version)
 
 

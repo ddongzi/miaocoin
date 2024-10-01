@@ -1,6 +1,7 @@
 const fs = require('fs-extra');
 const path = require('path');
-
+const Logger = require('../util/log')
+const logger = new Logger(__filename)
 class DB {
     constructor(filePath) {
         this.filePath = filePath;

@@ -1,5 +1,8 @@
 const os = require('os');
 
+const Logger = require('../util/log')
+const logger = new Logger(__filename)
+
 // 获取所有网络接口信息
 const interfaces = os.networkInterfaces();
 

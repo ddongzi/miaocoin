@@ -1,3 +1,6 @@
+const Logger = require('../util/log')
+const logger = new Logger(__filename)
+
 const hexToBinary = (s) => {
     let ret = '';
     const lookupTable = {

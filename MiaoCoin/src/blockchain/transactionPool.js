@@ -1,5 +1,6 @@
 const Transactions = require("./transactions");
-
+const Logger = require('../util/log')
+const logger = new Logger(__filename)
 class TransactionPool {
     constructor() {
         this.transactions = new Transactions()

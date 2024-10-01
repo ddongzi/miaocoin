@@ -6,19 +6,22 @@ const { getLocalIP } = require("../util/netUtil");
 
 const nodeConfig = require("../../data/node/nodeConfig.json")
 
+const Logger = require('../util/log')
+const logger = new Logger(__filename)
+
 class Node {
 
   constructor({root = false}) {
     // TODO 节点标识
     
-    console.log(`Node construct from config. Root: ${root}`);
+    logger.log(`Node construct from config. Root: ${root}`);
     
     this.node_config = {
       'root':root
     }
   }
   requestSync(peer = "") {
-    console.log("request sync ....");
+    logger.log("request sync ....");
     const msg = {
       type: MessageType.REQUEST_SYNC_BLOCKCHAIN,
       description: "request_sync_blockchain",
@@ -51,22 +54,22 @@ class Node {
   // 初始化矿工
    initMiner() {
     this.miner =  Miner.create(this);
-    console.log(`initMiner ${this.miner}`)
+    logger.log(`initMiner ${this.miner}`)
   }
 
   broadCastTransactionPool() {
-    console.log(`broadCastTransactionPool ing...`);
+    logger.log(`broadCastTransactionPool ing...`);
   }
   responseTransactionPool(transactions) {
     // 1. 尝试将tx放入池子
     transactions.forEach((tx) => {
       this.blockchain.addToTransactionPool(tx);
     });
-    console.log(`responseTransactionPool finished...`);
+    logger.log(`responseTransactionPool finished...`);
   }
   receiveNewTransaction(tx) {
     // 接收到新的交易，添加到本地的交易池中
-    console.log("Receive new transaction", tx);
+    logger.log("Receive new transaction", tx);
 
     this.txPool.push(tx);
   }

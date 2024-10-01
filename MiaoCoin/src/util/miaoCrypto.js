@@ -8,13 +8,14 @@ const {
   createVerify,
   getCurves,
 } = require("crypto");
-
+const Logger = require('../util/log')
+const logger = new Logger(__filename)
 class MiaoCrypto {
   /**
    * description : 打印库信息
    */
   static info() {
-    console.log(getCurves())
+    logger.log(getCurves())
   }
   /**
    *
@@ -139,17 +140,17 @@ class MiaoCrypto {
 }
 // ( () => {
 //   const { publicKey, privateKey } =  MiaoCrypto.generateKeyPair();
-//   console.log(`generateKeyPair pub:${publicKey} priv: ${privateKey}`);
+//   logger.log(`generateKeyPair pub:${publicKey} priv: ${privateKey}`);
 
 //   const data = "Hello, world!";
 //   const signature =  MiaoCrypto.sign(privateKey, data);
-//   console.log(`signature: ${signature}`);
+//   logger.log(`signature: ${signature}`);
 
 //   const isVerified =  MiaoCrypto.verify(publicKey, signature, data);
-//   console.log(`verify: ${isVerified}`);
+//   logger.log(`verify: ${isVerified}`);
 
 //   const pubHex =  MiaoCrypto.pemToHex(publicKey);
-//   console.log(`pubHex: ${pubHex}`);
+//   logger.log(`pubHex: ${pubHex}`);
 
 // })();
 

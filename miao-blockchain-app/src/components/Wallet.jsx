@@ -68,13 +68,13 @@ function Wallet() {
         })
         .catch(() => setLoading(false));
     } else {
-      console.log(`empty wallet ${balance}`);
+      logger.log(`empty wallet ${balance}`);
     }
   }, []);
 
   const handleCreateWallet = async () => {
     const { privateKey, publicKey } = await MyCrypto.generateKeyPair();
-    console.log(`创建新钱包 ${privateKey}, ${publicKey}`);
+    logger.log(`创建新钱包 ${privateKey}, ${publicKey}`);
     setPrivateKey(privateKey);
     setPublicKey(publicKey);
     setAddress(MyCrypto.pemToHex(publicKey));
@@ -108,7 +108,7 @@ function Wallet() {
     setPrivateKey(importPrivateKey);
     setPublicKey(importPublicKey);
 
-    console.log(
+    logger.log(
       `导入钱包\n${importPublicKey}\n${MyCrypto.pemToHex(importPrivateKey)}`
     );
     handleCloseImportDialog();
@@ -123,13 +123,13 @@ function Wallet() {
   };
 
   const signTx = async (tx) => {
-    console.log(`sign TX, size ${tx.inputs.length}`);
+    logger.log(`sign TX, size ${tx.inputs.length}`);
     tx.inputs = await Promise.all(
       tx.inputs.map(async (txin, index) => {
-        // console.log(`sign txin ${index}`);
+        // logger.log(`sign txin ${index}`);
         txin.signature = await MyCrypto.sign(tx.id, privateKey);
 
-        console.log(
+        logger.log(
           `signed txin ${index}, data ${tx.id} with signature ${
             txin.signature
           }, private key ${MyCrypto.pemToHex(privateKey)}, pub hex ${address}`
@@ -142,12 +142,12 @@ function Wallet() {
     return tx;
   };
   const verifyTx = async (tx) => {
-    console.log(`verifying tx size ${tx.inputs.length}`);
+    logger.log(`verifying tx size ${tx.inputs.length}`);
     let result = true;
 
     const promises = tx.inputs.map(async (txin) => {
       const isValid = await MyCrypto.verify(tx.id, txin.signature, publicKey);
-      console.log(
+      logger.log(
         `verified txin, data: ${tx.id}, valid: ${isValid}, signature: ${txin.signature}`
       );
 
@@ -170,11 +170,11 @@ function Wallet() {
     setTransferLoading(true);
     transfer(address, receiver, amount)
       .then((response) => {
-        console.log("transfer res ", response.data);
+        logger.log("transfer res ", response.data);
         signTx(response.data)
           .then((signedTx) => {
             setSuccessMessage("转账成功！");
-            console.log("success");
+            logger.log("success");
             sendSignedTx(signedTx)
               .then((response) => {})
               .catch((err) => {});

@@ -2,6 +2,9 @@
 const MiaoCrypto = require('../util/miaoCrypto');
 const Transaction = require('./transaction');
 const Transactions = require('./transactions');
+const Logger = require('../util/log')
+const logger = new Logger(__filename)
+
 class Block{
     constructor(index, timestamp, difficulty = 1, nouce = 1, data,previoushash = "",hash) {
         this.index = index;
@@ -11,7 +14,7 @@ class Block{
         this.hash = hash;
         this.difficulty = difficulty;
         this.nouce = nouce
-        // console.log(`Block constructor ${JSON.stringify(this)}`);
+        // logger.log(`Block constructor ${JSON.stringify(this)}`);
     }
 
 
@@ -25,7 +28,7 @@ class Block{
                 block[key] = blockJsonObj[key];
             }
         })
-        // console.log(`[Block] Block from JSON: \n
+        // logger.log(`[Block] Block from JSON: \n
         //     Before:${JSON.stringify(blockJsonObj)}\n
         //     After:${JSON.stringify(block)}`);
 
@@ -42,7 +45,7 @@ class Block{
      * @returns {string} HASH
      */
     static  caculateHash(index,timestamp,data,previoushash,difficulty,nouce) {
-        // console.log(`caculateHash ${index + previoushash + timestamp +difficulty + nouce + JSON.stringify(data)}`)
+        // logger.log(`caculateHash ${index + previoushash + timestamp +difficulty + nouce + JSON.stringify(data)}`)
         return  MiaoCrypto.hash(index + previoushash + timestamp +difficulty + nouce + JSON.stringify(data));
          
     }

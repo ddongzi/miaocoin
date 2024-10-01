@@ -9,7 +9,8 @@ const { MessageType } = require("../net/p2p");
 const path = require("path");
 const { Worker } = require("worker_threads");
 const Block = require("../blockchain/block");
-
+const Logger = require('../util/log')
+const logger = new Logger(__filename)
 // 每个节点上都有矿工角色。  负责签名产生区块
 const DATA_PATH = "/home/dong/JSCODE/MiaoCoin/data/miner";
 const PRIVATE_KEY_FILE = "/privatekey.pem";
@@ -29,7 +30,7 @@ class Miner {
   // 开始挖矿
   startMining() {
     if (this.worker) {
-      console.log("Miner is already mining.");
+      logger.log("Miner is already mining.");
       return;
     }
     const previousBlock = this.blockchain.getLastBlock();
@@ -53,7 +54,7 @@ class Miner {
     // 接受worker线程消息
     this.worker.on("message", (msg) => {
       if (msg.type === "newBlock") {
-        console.log(`[Miner] New block mined: ${JSON.stringify(msg.newBlock)}`);
+        logger.log(`[Miner] New block mined: ${JSON.stringify(msg.newBlock)}`);
         // 添加到链上， 更新utxouts
         const newBlock = Block.fromJson(msg.newBlock)
         const added = this.blockchain.addBlock(newBlock);
@@ -72,7 +73,7 @@ class Miner {
         // this.startMining();
         this.stopMining()
         // 
-        console.log(`clear pool .`)
+        logger.log(`clear pool .`)
         this.blockchain.pool.clear()
       }
     });
@@ -83,7 +84,7 @@ class Miner {
     });
 
     this.worker.on("exit", (code) => {
-      console.log(`Worker stopped with exit code ${code}`);
+      logger.log(`Worker stopped with exit code ${code}`);
       this.worker = null; // 清理 Worker 实例
     });
 
@@ -118,7 +119,7 @@ class Miner {
     const {privateKey, publicKey} =  Miner.loadKeys()
 
     const miner = new Miner(node,privateKey,publicKey);
-    console.log(`creating miner successfully.`);
+    logger.log(`creating miner successfully.`);
     return miner;
   }
 }

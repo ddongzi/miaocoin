@@ -3,9 +3,10 @@ const { Transaction } = require("../blockchain/transaction");
 const Block = require("../blockchain/block");
 const hexToBinary = require("../util/util");
 const Transactions = require("../blockchain/transactions");
-
+const Logger = require('../util/log')
+const logger = new Logger(__filename)
 const { info } = workerData;
-console.log(`[Worker Thread] Mine worker param : ${JSON.stringify(info)}`);
+logger.log(`[Worker Thread] Mine worker param : ${JSON.stringify(info)}`);
 // 通过挖矿产生区块
 function generateNextBlockWithMine() {
   const coinBaseTx = Transaction.generateConinBaseTransaction(
@@ -13,7 +14,7 @@ function generateNextBlockWithMine() {
     info.index
   );
   const txs = Transactions.fromJson(JSON.parse(info.txs));
-  console.log(
+  logger.log(
     `[Worker Thread] Generating next block with ${JSON.stringify(
       coinBaseTx
     )} and ${JSON.stringify(txs)}`
@@ -47,7 +48,7 @@ function batchNouce(data) {
       info.difficulty,
       nouce
     );
-    // console.log(`[worker thread] hash ${hash}, nouce ${nouce}`);
+    // logger.log(`[worker thread] hash ${hash}, nouce ${nouce}`);
     if (hasMatchesDifficulty(hash, info.difficulty)) {
       newBlock = new Block(
         info.index,
@@ -58,14 +59,14 @@ function batchNouce(data) {
         info.previousHash,
         hash
       );
-      console.log(`[Worker Thread] Mined a new block! ${JSON.stringify(newBlock)}, hash: ${newBlock.toHash()}`);
+      logger.log(`[Worker Thread] Mined a new block! ${JSON.stringify(newBlock)}, hash: ${newBlock.toHash()}`);
       break;
     }
     nouce++;
   }
   if (!newBlock) {
     // 没找到，继续下一各batch
-    console.log(`[Worker Thread] batch over`);
+    logger.log(`[Worker Thread] batch over`);
     setImmediate(batchNouce);
   } else {
     return newBlock;
@@ -74,7 +75,7 @@ function batchNouce(data) {
 
 function mine() {
   const now = new Date();
-  console.log(`[Worker Thread] Miner is mining...`);
+  logger.log(`[Worker Thread] Miner is mining...`);
 
   const newBlock = generateNextBlockWithMine();
 
@@ -85,7 +86,7 @@ function mine() {
   const hours = Math.floor(timeDifference / (1000 * 60 * 60));
   const minutes = Math.floor((timeDifference % (1000 * 60 * 60)) / (1000 * 60));
   const seconds = Math.floor((timeDifference % (1000 * 60)) / 1000);
-  console.log(`[Worker Thread] Miner finished.
+  logger.log(`[Worker Thread] Miner finished.
         Cost time : ${hours}h ${minutes}m ${seconds}s. 
         Difficulty: ${newBlock.difficulty}, Nouce : ${newBlock.nouce}`);
 

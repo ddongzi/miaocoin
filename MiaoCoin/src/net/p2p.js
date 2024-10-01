@@ -3,7 +3,8 @@ const WebSocket = require("ws");
 const EventEmitter = require("events");
 const { getLocalIP } = require("../util/netUtil");
 const Block = require("../blockchain/block");
-
+const Logger = require('../util/log')
+const logger = new Logger(__filename)
 const MessageType = {
   QUERY_LATEST: 0, // 查询最新区块
   QUERY_ALL: 1, // 查询整个区块链 ：在节点初次加入时同步
@@ -26,7 +27,7 @@ class P2P {
     this.node = node;
 
     this.wsurl = "ws://" + getLocalIP() + ":" + port;
-    console.log(`P2P constructor , wsurl: ${this.wsurl}`);
+    logger.log(`P2P constructor , wsurl: ${this.wsurl}`);
     this.emitter = new EventEmitter();
 
     this.sockets = []; // 客户端套接字：保持连接 （自己为服务端）
@@ -47,11 +48,11 @@ class P2P {
     this.server = new WebSocket.Server({ port: this.port });
     this.server.on("connection", (socket, req) => {
       this.sockets.push(socket);
-      console.log(`client connected .`);
+      logger.log(`client connected .`);
 
       // 连接关闭时触发
       socket.on("close", function () {
-        console.log("Client disconnected");
+        logger.log("Client disconnected");
       });
 
       // 发生错误时触发
@@ -67,7 +68,7 @@ class P2P {
         })
       );
     });
-    console.log(`P2p listening on ws://${this.wsurl}:${this.port}`);
+    logger.log(`P2p listening on ws://${this.wsurl}:${this.port}`);
   }
 
   // 作为服务端，初始化与客户端请求
@@ -79,7 +80,7 @@ class P2P {
   initRequestMessageHandler = (socket) => {
     socket.on("message", (data) => {
       const message = JSON.parse(data);
-      console.log(`Received requst message :  ${data}`);
+      logger.log(`Received requst message :  ${data}`);
 
       switch (message.type) {
         case MessageType.QUERY_LATEST:
@@ -136,23 +137,23 @@ class P2P {
       return true;
     });
     newPeers = newPeers.filter((peer) => peer !== this.wsurl);
-    console.log(`new peers  ${JSON.stringify(newPeers)}`);
+    logger.log(`new peers  ${JSON.stringify(newPeers)}`);
     for (let newPeer of newPeers) {
       const socket = this.connectPeer(newPeer);
     }
-    console.log(`update peers ${[...this.peers.keys()]}`);
+    logger.log(`update peers ${[...this.peers.keys()]}`);
   }
 
   // 作为客户端，发起连接，接受回复
   connectPeer(peer) {
-    console.log(`Connecting to ${peer}`);
+    logger.log(`Connecting to ${peer}`);
     //peer : 'ws://localhost:8080'
     const socket = new WebSocket(peer);
 
     this.peers.set(peer, socket);
 
     socket.on("open", () => {
-      console.log(`socket on : ${peer}`);
+      logger.log(`socket on : ${peer}`);
       this.broadcast({
         type: MessageType.PEER_P2P_UP,
         description: "peer p2p service up",
@@ -175,7 +176,7 @@ class P2P {
       this.peers.get(peer).send(JSON.stringify(msg));
     } else {
       //
-      console.log(`send peer ${peer} not recorded`);
+      logger.log(`send peer ${peer} not recorded`);
     }
   }
 
@@ -183,7 +184,7 @@ class P2P {
   initResponseMessageHandler(socket) {
     socket.on("message", (data) => {
       const message = JSON.parse(data);
-      console.log(`Received response message :  ${data}`);
+      logger.log(`Received response message :  ${data}`);
 
       switch (message.type) {
         case MessageType.RESPONSE_BLOCKCHAIN:
@@ -202,14 +203,14 @@ class P2P {
   }
   // 广播： msg为对象类型
   broadcast(msg) {
-    console.log(
+    logger.log(
       `broadcast ${JSON.stringify(msg)}, sockets : ${this.peers.size}`
     );
     // 向各peer服务地址发出请求
     for (var peer of this.peers.keys()) {
       const socket = this.peers.get(peer);
       if (socket.readyState === WebSocket.OPEN) {
-        console.log(`broadcast to ${peer}`);
+        logger.log(`broadcast to ${peer}`);
         socket.send(JSON.stringify(msg));
       } else {
         let intervalId = setInterval(() => {
@@ -217,7 +218,7 @@ class P2P {
             clearInterval(intervalId);
             socket.send(JSON.stringify(msg));
           } else {
-            console.log(`WebSocket not open. ${peer} Retrying...`);
+            logger.log(`WebSocket not open. ${peer} Retrying...`);
           }
         }, 1000 * 5); // 5s 重试
       }

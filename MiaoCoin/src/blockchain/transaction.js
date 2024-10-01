@@ -1,5 +1,7 @@
 const { COINBASE_AMOUNT } = require("../config");
 const MiaoCrypto = require("../util/miaoCrypto");
+const Logger = require('../util/log')
+const logger = new Logger(__filename)
 class TxInput {
   constructor(txOutId, txOutIndex, signature) {
     this.txOutId = txOutId; // 与该输入相关的之前交易ID
@@ -41,9 +43,9 @@ class Transaction {
       .map((t) => t.address + t.amount)
       .reduce((a, b) => a + b, "");
 
-    // console.log("Input Content:", inputContent);
-    // console.log("Output Content:", outputContent);
-    // console.log("Concatenated Content:", inputContent + outputContent);
+    // logger.log("Input Content:", inputContent);
+    // logger.log("Output Content:", outputContent);
+    // logger.log("Concatenated Content:", inputContent + outputContent);
     return MiaoCrypto.hash(inputContent + outputContent)
      
   }
@@ -89,7 +91,7 @@ class Transaction {
     );
   }
   static fromJson(data) {
-    // console.log(`Transaction from JSON: ${JSON.stringify(data)}`);  // 打印出反序列化前的数据
+    // logger.log(`Transaction from JSON: ${JSON.stringify(data)}`);  // 打印出反序列化前的数据
     let tx = new Transaction();
     Object.keys(data).forEach((key) => {
       tx[key] = data[key];

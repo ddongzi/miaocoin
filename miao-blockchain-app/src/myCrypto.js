@@ -70,7 +70,7 @@ class MyCrypto {
       signatureBuffer,
       dataBuffer
     );
-    // console.log(`Verify result: ${isValid}, data: ${data} , signature: ${signature}, pubkey: ${publicKey}`)
+    // logger.log(`Verify result: ${isValid}, data: ${data} , signature: ${signature}, pubkey: ${publicKey}`)
     return isValid;
   }
 
@@ -121,9 +121,9 @@ class MyCrypto {
         ["sign"]
       );
     } catch (error) {
-      console.log(error);
+      logger.log(error);
     }
-    console.log("importKey result:", importKey);
+    logger.log("importKey result:", importKey);
     return importKey;
   }
 
@@ -185,7 +185,7 @@ class MyCrypto {
       ...sDer,
     ]);
 
-    // console.log(`before : ${p1363Signature} , after : ${derSignature}`);
+    // logger.log(`before : ${p1363Signature} , after : ${derSignature}`);
     return derSignature;
   }
 
@@ -227,24 +227,24 @@ class MyCrypto {
 // (async () => {
 //   // 生成散列
 //   const hash = await MyCrypto.hash("Hello, world!");
-//   console.log("Hash:", hash);
+//   logger.log("Hash:", hash);
 
 //   // 生成随机ID
 //   const randomId = MyCrypto.randomId();
-//   console.log("Random ID:", randomId);
+//   logger.log("Random ID:", randomId);
 
 //   // 生成密钥对
 //   const { privateKey, publicKey } = await MyCrypto.generateKeyPair();
-//   console.log("Private Key:", MyCrypto.pemToHex(privateKey));
-//   console.log("Public Key:", publicKey);
+//   logger.log("Private Key:", MyCrypto.pemToHex(privateKey));
+//   logger.log("Public Key:", publicKey);
 
 //   // 签名数据
 //   const signature = await MyCrypto.sign("Hello, world!", privateKey);
-//   console.log("Signature:", signature);
+//   logger.log("Signature:", signature);
 
 //   // PEM转Hex
 //   const hex = MyCrypto.pemToHex(privateKey);
-//   console.log("PEM to Hex:", hex);
+//   logger.log("PEM to Hex:", hex);
 // })();
 
 export default MyCrypto;
