@@ -46,21 +46,23 @@ class BlockChain {
 
   // 初始节点使用
    init() {
-    // todo :容器初始化写死同一个创世区块
-    // TODO: 只有初始节点需要初始化，其他节点向peer同步
-    console.log("#0 init blockchain..");
-    // Create from genius block if blockchain is empty.
-    console.log(`[${G_NAME}] INIT blocks ${this.blocks}`);
-    if (this.blocks.length === 0) {
-      console.log("Blockchain is empty, creating from genesis block");
-      try {
-        const geniusBlock =  this.createGeniusBlock();
-        this.blocks.push(geniusBlock);
-        this.blocksDb.write(this.blocks);
-      } catch (error) {
-        console.error("Create genesis block error:", error);
-      }
+    if (this.node.isRoot) {
+        // 只有初始节点需要初始化，其他节点向peer同步
+        console.log("#0 node init blockchain..");
+        // Create from genius block if blockchain is empty.
+        console.log(`[${G_NAME}] INIT blocks ${this.blocks}`);
+        if (this.blocks.length === 0) {
+          console.log("Blockchain is empty, creating from genesis block");
+          try {
+            const geniusBlock =  this.createGeniusBlock();
+            this.blocks.push(geniusBlock);
+            this.blocksDb.write(this.blocks);
+          } catch (error) {
+            console.error("Create genesis block error:", error);
+          }
+        }
     }
+
   }
   // 验证交易签名
   verifySignTx(tx) {

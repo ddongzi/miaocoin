@@ -4,12 +4,19 @@ const HttpServer = require("../net/httpServer");
 const { P2P, MessageType } = require("../net/p2p");
 const { getLocalIP } = require("../util/netUtil");
 
-class Node {
-  constructor() {
-    // 空的区块链
-    this.blockchain = new BlockChain(this);
-  }
+const nodeConfig = require("../../data/node/nodeConfig.json")
 
+class Node {
+
+  constructor({root = false}) {
+    // TODO 节点标识
+    
+    console.log(`Node construct from config. Root: ${root}`);
+    
+    this.node_config = {
+      'root':root
+    }
+  }
   requestSync(peer = "") {
     console.log("request sync ....");
     const msg = {
@@ -24,6 +31,12 @@ class Node {
     } else {
       this.p2p.sendPeer(peer, msg);
     }
+  }
+
+  // 初始化区块链
+  initBlockChain(blockchain) {
+    this.blockchain = blockchain
+    blockchain.init() 
   }
 
   // 初始化网络 p2p和http服务

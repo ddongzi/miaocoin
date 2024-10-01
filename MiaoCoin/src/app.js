@@ -13,14 +13,33 @@ const role = process.env.ROLE || 'ROOT';
 
 const dataPath = './data';
 
+const node_config = {}
+
+const {program} = require('commander')
+const node_command = program
+    .command('node')
+    .description('node cli')
+
+node_command
+    .command('--root <root>')
+    .description('node root role')
+    .action((options) => {
+        console.log(`get options : ${options}`);
+        // 
+        if (options.root) {
+            node_config.root = options.root
+        }
+    });
+    
 
 (() => {
     try {
         // 创建初始节点： 
-        const node = new Node();
-        node.blockchain.init()
+        const node = new Node(node_config);
+        const blockchain = new BlockChain(node)
         const p2p = new P2P(p2pPort, node);
         const http = new HttpServer(httpPort, node);
+        node.initBlockChain(blockchain)
         node.initNetwork(p2p, http);
         node.initMiner()
         // 预置一个区块，矿工有钱
