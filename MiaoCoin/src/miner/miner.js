@@ -4,6 +4,11 @@ const {
   writeFileSync,
   existsSync,
 } = require("fs-extra");
+const { fork } = require('child_process');
+
+const fs = require('fs');
+const { pathToFileURL } = require('url');
+const os = require('os');
 const MiaoCrypto = require("../util/miaoCrypto");
 const { MessageType } = require("../net/p2p");
 const path = require("path");
@@ -12,9 +17,9 @@ const Block = require("../blockchain/block");
 const Logger = require('../util/log')
 const logger = new Logger(__filename)
 // 每个节点上都有矿工角色。  负责签名产生区块
-const DATA_PATH = "/home/dong/JSCODE/MiaoCoin/data/miner";
-const PRIVATE_KEY_FILE = "/privatekey.pem";
-const PUBLIC_KEY_FILE = "/publickey.pem";
+const DATA_PATH = process.cwd() + "/data/miner/";
+const PRIVATE_KEY_FILE = "privatekey.pem";
+const PUBLIC_KEY_FILE = "publickey.pem";
 
 class Miner {
   constructor(node, privateKey, publicKey) {
@@ -37,19 +42,20 @@ class Miner {
     const { index, hash } = previousBlock;
 
     const difficulty = this.blockchain.getDifficulty();
-    // 从(脚本地址)文件创建一个新的worker线程
-    this.worker = new Worker(path.resolve(__dirname, "./mineWorker.js"), {
-      // 传入一些未确认交易
-      workerData: {
-        info: {
-          txs: JSON.stringify(this.blockchain.pool.getAll()), 
-          address: this.address,
-          index: index + 1,
-          previousHash: hash,
-          difficulty: difficulty,
-        },
-      },
-    });
+    // 传递给子进程的数据
+    const workerData = {
+      txs: JSON.stringify(this.blockchain.pool.getAll()),
+      address: this.address,
+      index: index + 1,
+      previousHash: hash,
+      difficulty,
+    };
+    const workerPath = path.join(__dirname, 'mineProcess.js');
+    this.worker = fork(workerPath, [], 
+      { 
+        env: { WORKER_DATA: JSON.stringify(workerData) } 
+      }
+    );
 
     // 接受worker线程消息
     this.worker.on("message", (msg) => {
@@ -87,15 +93,12 @@ class Miner {
       logger.log(`Worker stopped with exit code ${code}`);
       this.worker = null; // 清理 Worker 实例
     });
-
-    
-    this.worker.postMessage("startMining");
   }
 
   // 停止挖矿
   stopMining() {
     if (this.worker) {
-      this.worker.terminate();
+      this.worker.kill();
       this.worker = null;
     }
   }

@@ -19,7 +19,7 @@ const UTXOUTS_FILE = "/utxouts.json";
 const BLOCK_GENERATION_INTERNAL = 60 * 3; // 3 min
 const DIFFICULTY_ADJUSTMENT_INTERVAL = 3; // 3 blocks
 
-const DATA_PATH = "/home/dong/JSCODE/MiaoCoin/data/blockchain";
+const DATA_PATH = process.cwd() + "/data/blockchain";
 
 const Logger = require('../util/log.js')
 const logger = new Logger(__filename);
@@ -49,7 +49,8 @@ class BlockChain {
 
   // 初始节点使用
    init() {
-    if (this.node.isRoot) {
+    logger.log(`init this blockchain, must root: ${this.node.root} `)
+    if (this.node.isroot) {
         // 只有初始节点需要初始化，其他节点向peer同步
         logger.log("#0 node init blockchain..");
         // Create from genius block if blockchain is empty.
@@ -238,7 +239,7 @@ class BlockChain {
       this.blocks.push(newBlock);
       this.blocksDb.write(this.blocks);
 
-      console.info(`[${G_NAME}] Blockchain  added Block#${newBlock.index}`);
+      console.info(`Blockchain  added Block#${newBlock.index}`);
       return true;
     }
     logger.log(`addblock checkblock failed`);
@@ -252,39 +253,39 @@ class BlockChain {
    * @returns {boolean} 
    */
    checkBlock(newBlock, previousBlock) {
-    logger.log(`[${G_NAME}] checking block... ${JSON.stringify(newBlock)}`);
+    logger.log(`checking block... ${JSON.stringify(newBlock)}`);
 
     if (!previousBlock) {
       // 前面区块不存在：说明 链相差至少2个块，放弃此次添加，等待同步
-      console.error(`[${G_NAME}] Check block failed: previous block not exist`);
+      console.error(`Check block failed: previous block not exist`);
       return false;
     }
-    logger.log(`[${G_NAME}] checking phrase1 succeed...`);
+    logger.log(`checking phrase1 succeed...`);
 
     if (previousBlock.index + 1 !== newBlock.index) {
       console.error(
-        `[${G_NAME}] CheckBlock failed :Invalid index. Expected ${
+        `CheckBlock failed :Invalid index. Expected ${
           previousBlock.index + 1
         }, got ${newBlock.index}`
       );
       return false;
     }
-    logger.log(`[${G_NAME}] checking phrase2 succeed...`);
+    logger.log(`checking phrase2 succeed...`);
 
     if (previousBlock.hash !== newBlock.previoushash) {
       console.error(
-        `[${G_NAME}] Invalid previous hash, expected:${previousBlock.hash} ,got: ${
+        `Invalid previous hash, expected:${previousBlock.hash} ,got: ${
           newBlock.previoushash
         },`
       );
       return false;
     }
-    logger.log(`[${G_NAME}] checking phrase3 succeed...`);
+    logger.log(`checking phrase3 succeed...`);
 
     if (newBlock.toHash() !== newBlock.hash) {
 
       console.error(
-        `[${G_NAME}] newBlock hash failed, expected ${
+        `newBlock hash failed, expected ${
           newBlock.hash
         }, got ${newBlock.toHash()}
         , really ${Block.caculateHash(newBlock.index,newBlock.timestamp,newBlock.data,newBlock.previoushash,newBlock.difficulty,newBlock.nouce)}`
@@ -292,7 +293,7 @@ class BlockChain {
       return false;
     }
 
-    logger.log(`[${G_NAME}] check block succeeded.`);
+    logger.log(`check block succeeded.`);
     return true;
   }
 

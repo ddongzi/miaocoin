@@ -128,3 +128,8 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+
+.venv/
+# 忽略项目中所有 data 目录
+**/data/

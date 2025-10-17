@@ -16,9 +16,7 @@ class Node {
     
     logger.log(`Node construct from config. Root: ${root}`);
     
-    this.node_config = {
-      'root':root
-    }
+    this.isroot = root
   }
   requestSync(peer = "") {
     logger.log("request sync ....");

@@ -20,5 +20,3 @@ class Logger {
     }
 }
 module.exports = Logger
-
-new Logger(__filename).err('hell0')

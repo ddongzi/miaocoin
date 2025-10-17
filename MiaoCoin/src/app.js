@@ -15,40 +15,36 @@ const role = process.env.ROLE || 'ROOT';
 
 const dataPath = './data';
 
-const node_config = {}
+const { program } = require('commander');
+const node_config = {};
 
-const {program} = require('commander')
-const node_command = program
-    .command('node')
-    .description('node cli')
-
-node_command
-    .command('--root <root>')
-    .description('node root role')
-    .action((options) => {
-        logger.log(`get options : ${options}`);
-        // 
-        if (options.root) {
-            node_config.root = options.root
-        }
-    });
-    
-
-(() => {
-    try {
-        // 创建初始节点： 
-        const node = new Node(node_config);
-        const blockchain = new BlockChain(node)
-        const p2p = new P2P(p2pPort, node);
-        const http = new HttpServer(httpPort, node);
-        node.initBlockChain(blockchain)
-        node.initNetwork(p2p, http);
-        node.initMiner()
-        // 预置一个区块，矿工有钱
-        node.miner.startMining()
-    } catch (e) {
-        console.error("Error:", e);
+program
+  .name('miaocoin')
+  .description('Miaocoin blockchain CLI')
+  .version('1.0.0')
+  .option('--root', 'Set this node as ROOT')
+  .option('--http-port <port>', 'HTTP port', 3000)
+  .option('--p2p-port <port>', 'P2P port', 4000)
+  .action((opts) => {
+    if (opts.root) {
+      node_config.root = true;
+      logger.log('This node is ROOT');
+    } else {
+      node_config.root = false;
+      logger.log('This node is a regular node');
     }
 
-})();
+    const httpPort = opts.httpPort;
+    const p2pPort = opts.p2pPort;
 
+    const node = new Node(node_config);
+    const blockchain = new BlockChain(node);
+    const p2p = new P2P(p2pPort, node);
+    const http = new HttpServer(httpPort, node);
+    node.initBlockChain(blockchain);
+    node.initNetwork(p2p, http);
+    node.initMiner();
+    node.miner.startMining();
+  });
+
+program.parse(process.argv);

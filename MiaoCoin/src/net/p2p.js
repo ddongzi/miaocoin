@@ -17,8 +17,9 @@ const MessageType = {
 
   NEW_BLOCK: 7, // 发掘到新的区块
   PEER_P2P_UP: 8, // 节点主动上报自己的服务地址
-
   NOTIFY_SYNC: 9, // 主动通知同步
+  PEER_P2P_UP_FORBIDDEN_ROOT:10 // 节点上线 禁止root 失败！
+
 };
 
 class P2P {
@@ -40,8 +41,10 @@ class P2P {
 
   // 初始化自己客户端角色
   initClient() {
-    // 连接到引导节点：
-    this.updatePeers(["ws://172.17.0.2:4000"]);
+    // 连接到引导节点：目前就是root， root自己不联自己
+    if (!this.node.isroot) {
+      this.updatePeers(["ws://127.0.0.1:4000"]);
+    }
   }
 
   initServer() {
@@ -107,9 +110,17 @@ class P2P {
           socket.send(JSON.stringify(resmsg));
           break;
         case MessageType.PEER_P2P_UP:
-          // 节点P2P服务上线
-          let peerwsurl = message.data.wsurl;
-          this.updatePeers([peerwsurl]);
+          // 节点P2P服务上线. 
+          // 严重合法性， 比如 禁止root
+          let {isroot, wsurl} = message.data;
+          if (isroot) {
+            socket.send(JSON.stringify({
+              'type': MessageType.PEER_P2P_UP_FORBIDDEN_ROOT,
+              'data': {}
+            }))
+          } else {
+            this.updatePeers([wsurl]);
+          }
           break;
         case MessageType.NEW_BLOCK:
           // 收到 新块
@@ -159,6 +170,7 @@ class P2P {
         description: "peer p2p service up",
         data: {
           wsurl: this.wsurl, // 发送自己服务地址
+          root: this.node.isroot
         },
       });
     });
@@ -198,6 +210,10 @@ class P2P {
             JSON.stringify(message.data)
           );
           break;
+        case MessageType.PEER_P2P_UP_FORBIDDEN_ROOT:
+          // 下线
+          process.exit(-1);
+          break
       }
     });
   }
